@@ -487,8 +487,13 @@ paths:
               type: object
               properties:
                 extraData:
-                  type: object
-                  description: Additional context to include in the analysis
+                  type: string
+                  maxLength: 40000
+                  description: |
+                    Additional text context to include in the analysis.
+                    Can contain supplementary information like email threads,
+                    meeting notes, or other relevant content that helps the AI
+                    better understand the company.
       responses:
         '200':
           description: Analysis completed successfully
@@ -3072,8 +3077,9 @@ components:
         id:
           type: string
           format: uuid
-        name:
+        status_text:
           type: string
+          description: Display name of the status
           example: Initial Review
         color:
           type: string
@@ -3556,11 +3562,13 @@ components:
             - session
     CompanyAttachment:
       type: object
+      description: File or link attachment associated with a company
       required:
         - id
         - company_id
+        - account_id
+        - attachment_type
         - title
-        - storage_path
       properties:
         id:
           type: string
@@ -3568,21 +3576,47 @@ components:
         company_id:
           type: string
           format: uuid
+        account_id:
+          type: string
+          format: uuid
+        attachment_type:
+          type: string
+          enum:
+            - file
+            - link
+          description: Type of attachment (file stored in storage, or external link)
         title:
           type: string
+          maxLength: 500
           example: Financial Projections
         description:
           type: string
           nullable: true
           example: Q4 2024 financial projections spreadsheet
-        storage_path:
+        file_path:
           type: string
-        file_type:
+          nullable: true
+          description: Storage path for file attachments (null for links)
+          example: company-uuid/attachment-uuid/document.pdf
+        link_url:
           type: string
-          example: application/pdf
-        file_size:
+          format: uri
+          nullable: true
+          description: External URL for link attachments (null for files)
+        file_size_bytes:
           type: integer
-          description: File size in bytes
+          nullable: true
+          description: File size in bytes (files only)
+        file_mime_type:
+          type: string
+          nullable: true
+          description: MIME type of the file (files only)
+          example: application/pdf
+        original_filename:
+          type: string
+          nullable: true
+          description: Original filename when uploaded (files only)
+          example: Q4 Projections.xlsx
         created_at:
           type: string
           format: date-time
@@ -3599,26 +3633,27 @@ components:
           type: boolean
         data:
           type: object
+          description: Analysis results extracted from the pitch deck
           properties:
-            company:
-              $ref: '#/components/schemas/Company'
-              description: Updated company with AI-extracted metadata
-            analysis:
-              type: object
-              description: Raw analysis results
-              properties:
-                founders:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/Founder'
-                ai_analysis:
-                  type: string
-                  description: AI-generated company summary
-                user_preferences:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/UserPreference'
-                  description: Extracted custom field values
+            company_name:
+              type: string
+              nullable: true
+              description: Company name extracted from the deck (if detected)
+              example: Acme Technologies
+            ai_analysis:
+              type: string
+              description: AI-generated company summary/description
+              example: B2B SaaS platform providing enterprise workflow automation with AI-powered document processing.
+            founders:
+              type: array
+              description: Founder/team information extracted from the deck
+              items:
+                $ref: '#/components/schemas/Founder'
+            user_preferences:
+              type: array
+              description: Custom field values extracted based on account's configured fields
+              items:
+                $ref: '#/components/schemas/UserPreference'
     AiUploadRequest:
       type: object
       required:

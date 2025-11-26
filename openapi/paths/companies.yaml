@@ -351,8 +351,13 @@
             type: object
             properties:
               extraData:
-                type: object
-                description: Additional context to include in the analysis
+                type: string
+                maxLength: 40000
+                description: |
+                  Additional text context to include in the analysis.
+                  Can contain supplementary information like email threads,
+                  meeting notes, or other relevant content that helps the AI
+                  better understand the company.
     responses:
       '200':
         description: Analysis completed successfully

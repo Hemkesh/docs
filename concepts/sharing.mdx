@@ -1,203 +1,92 @@
 ---
-title: "Sharing & Integrations"
-description: "Share company data and integrate with external tools"
+title: "Sharing & Visibility"
+description: "Control access to companies with visibility settings"
 ---
 
-# Sharing & Integrations
+# Sharing & Visibility
 
-Roulette provides multiple ways to share your deal flow data with LPs, co-investors, and external tools.
+Roulette provides granular control over who can access company data within your team.
 
-## Shared Links
+## Visibility Levels
 
-Create secure, shareable links to give external parties access to selected companies:
+Each company can have one of three visibility settings:
 
-```bash
-curl -X POST "https://useroulette.com/api/v1/accounts/{account_id}/shared-links" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Q1 2024 Portfolio for ABC Capital",
-    "password": "secure-password",
-    "expires_at": "2024-06-01T00:00:00Z",
-    "companies": [
-      { "company_id": "uuid-1", "permissions": "view_deck" },
-      { "company_id": "uuid-2", "permissions": "view" }
-    ]
-  }'
-```
-
-### Permission Levels
-
-| Permission | Description |
-|------------|-------------|
-| `view` | Basic company info only |
-| `view_deck` | Company info + pitch deck |
-| `full` | All available information |
-
-### Link Features
-
-<CardGroup cols={2}>
-  <Card title="Password Protection" icon="lock">
-    Require a password to access the link
+<CardGroup cols={3}>
+  <Card title="Private" icon="lock">
+    Only visible to the user who created it
   </Card>
-  <Card title="Expiration Dates" icon="calendar">
-    Set automatic expiration for links
+  <Card title="Shared" icon="user-group">
+    Visible to specific users you choose
   </Card>
-  <Card title="Access Logs" icon="list-check">
-    Track who viewed your shared content
-  </Card>
-  <Card title="Per-Company Permissions" icon="sliders">
-    Control access at the company level
+  <Card title="Team" icon="users">
+    Visible to all team members (default)
   </Card>
 </CardGroup>
 
-## Investor Dashboard
+## Setting Visibility
 
-Create a dedicated dashboard for your LPs to view portfolio performance:
+When creating a company via the AI upload endpoint:
 
 ```bash
-# Create an investor dashboard
-curl -X POST "https://useroulette.com/api/v1/accounts/{account_id}/investor-dashboard" \
+curl -X POST "https://useroulette.com/api/v1/companies/upload/ai" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -F "account_id=YOUR_ACCOUNT_ID" \
+  -F "text=Company info here" \
+  -F "name=Stealth Startup" \
+  -F "visibility=private"
+```
+
+Or update an existing company:
+
+```bash
+curl -X PATCH "https://useroulette.com/api/v1/companies/{company_id}" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "password": "lp-access-2024",
-    "shared_permissions": ["view_portfolio", "view_metrics"],
-    "is_active": true
+    "visibility": "team"
   }'
 ```
 
-### Dashboard Permissions
+## Filtering by Visibility
 
-| Permission | Description |
-|------------|-------------|
-| `view_portfolio` | List of portfolio companies |
-| `view_metrics` | Performance metrics and charts |
-| `view_updates` | Company updates and news |
-| `download_reports` | Ability to download PDF reports |
-
-## Form Integrations
-
-Connect external forms to automatically create companies in your pipeline.
-
-### Tally Integration
-
-1. Create a Tally form for deal submissions
-2. Configure the Tally integration in Roulette:
+List companies with a specific visibility level:
 
 ```bash
-curl -X POST "https://useroulette.com/api/v1/accounts/{account_id}/integrations" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "integration_type": "tally",
-    "secret": "your-tally-signing-secret"
-  }'
-```
-
-3. Set your Tally webhook URL to:
-   ```
-   https://useroulette.com/api/v1/accounts/{account_id}/form-submissions/tally
-   ```
-
-### Form Submission Flow
-
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│  Tally Form  │ ──▶ │   Webhook    │ ──▶ │  Roulette    │
-│  Submitted   │     │   Received   │     │  Processes   │
-└──────────────┘     └──────────────┘     └──────────────┘
-                                                 │
-                     ┌───────────────────────────┘
-                     ▼
-        ┌─────────────────────────────┐
-        │  Form Submission Created    │
-        │  (optionally converted to   │
-        │   company automatically)    │
-        └─────────────────────────────┘
-```
-
-### Converting Submissions to Companies
-
-Manually convert a form submission to a company:
-
-```bash
-curl -X POST "https://useroulette.com/api/v1/accounts/{account_id}/form-submissions/{submission_id}/convert" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "company_status_id": "initial-review-status-uuid"
-  }'
-```
-
-## Short URLs
-
-Create trackable short URLs for pitch deck links:
-
-```bash
-curl -X POST "https://useroulette.com/api/v1/short-urls" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "original_url": "https://example.com/pitch-deck.pdf",
-    "account_id": "your-account-id",
-    "password": "auto-generate"
-  }'
-```
-
-Response:
-```json
-{
-  "success": true,
-  "data": {
-    "short_code": "abc12xyz",
-    "short_url": "https://useroulette.com/r/abc12xyz",
-    "password": "auto-generated-password"
-  }
-}
-```
-
-## Access Logging
-
-All shared content access is logged for security and analytics:
-
-```bash
-# Get access logs for a shared link
-curl -X GET "https://useroulette.com/api/v1/accounts/{account_id}/shared-links/{link_id}/access-logs" \
+curl -X GET "https://useroulette.com/api/v1/companies?visibility=private" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
-Response:
+## Company Assignees
+
+Companies can have team members assigned to them. Assignees are returned with the company data:
+
 ```json
 {
-  "success": true,
-  "data": {
-    "access_logs": [
-      {
-        "id": "log-uuid",
-        "ip_address": "192.168.x.x",
-        "user_agent": "Mozilla/5.0...",
-        "country": "US",
-        "accessed_at": "2024-01-20T15:30:00Z"
-      }
-    ]
-  }
+  "id": "company-uuid",
+  "name": "Acme Corp",
+  "assignees": [
+    {
+      "id": "user-uuid",
+      "name": "Jane Smith",
+      "email": "jane@example.com",
+      "picture_url": "https://..."
+    }
+  ]
 }
 ```
+
+<Note>
+  Visibility settings work in conjunction with your team's roles and permissions.
+  Even with "team" visibility, users must have the appropriate permissions to view companies.
+</Note>
 
 ## Related Resources
 
 <CardGroup cols={2}>
-  <Card title="Shared Links API" icon="link" href="/api-reference/shared-links/list">
-    Manage shared links
+  <Card title="Companies API" icon="building" href="/api-reference/companies/list">
+    List and filter companies
   </Card>
-  <Card title="Integrations API" icon="plug" href="/api-reference/integrations/list">
-    Configure integrations
-  </Card>
-  <Card title="Form Submissions API" icon="file-lines" href="/api-reference/form-submissions/list">
-    Handle form data
-  </Card>
-  <Card title="Investor Dashboard API" icon="chart-line" href="/api-reference/investor-dashboard/get">
-    LP portal management
+  <Card title="Company Concepts" icon="lightbulb" href="/concepts/companies">
+    Learn about company properties
   </Card>
 </CardGroup>

@@ -16,17 +16,20 @@ Each company record contains the following key properties:
 | `id` | UUID | Unique identifier |
 | `account_id` | UUID | The team/account this company belongs to |
 | `name` | string | Company name |
-| `website` | string | Company website URL |
-| `description` | string | Brief description of the company |
 | `deck_link` | string | URL to external pitch deck |
 | `deck_storage_path` | string | Internal path to uploaded deck |
 | `notes` | string | Internal notes (not visible to company) |
 | `company_status_id` | UUID | Current pipeline stage |
-| `visibility` | enum | Access control level |
+| `company_status` | object | Embedded status object with `status_text`, `color`, `rank` |
+| `visibility` | enum | Access control level (`private`, `shared`, `team`) |
 | `source` | enum | How the company was added |
-| `metadata` | object | Custom fields and data |
+| `source_content` | string | Raw source content (e.g., form submission data) |
+| `metadata` | object | Custom fields, AI analysis, and founder data |
+| `assignees` | array | Team members assigned to this company |
 | `created_at` | timestamp | When the record was created |
 | `updated_at` | timestamp | When last modified |
+| `created_by` | UUID | User who created the record |
+| `updated_by` | UUID | User who last updated the record |
 
 ## Visibility Levels
 
@@ -83,39 +86,81 @@ Link to decks hosted on DocSend, Google Drive, or other platforms:
 }
 ```
 
-### Direct Upload
-Upload PDFs directly to Roulette for secure storage and AI analysis:
+### AI-Powered Upload
+Use the intelligent upload endpoint to process emails, forms, or any text with deck URLs:
 
 ```bash
-curl -X POST "https://useroulette.com/api/v1/companies/upload" \
+curl -X POST "https://useroulette.com/api/v1/companies/upload/ai" \
   -H "Authorization: Bearer YOUR_API_KEY" \
-  -F "file=@pitch-deck.pdf" \
-  -F "company_data={\"name\":\"Acme Corp\",\"account_id\":\"...\"}"
+  -F "account_id=YOUR_ACCOUNT_ID" \
+  -F "text=Here's our deck: https://docsend.com/view/abc123" \
+  -F "name=Acme Corp"
+```
+
+You can also upload files directly:
+
+```bash
+curl -X POST "https://useroulette.com/api/v1/companies/upload/ai" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -F "account_id=YOUR_ACCOUNT_ID" \
+  -F "text=Meeting notes from coffee chat" \
+  -F "name=Acme Corp" \
+  -F "file_0=@pitch-deck.pdf"
 ```
 
 <Tip>
-  Uploaded decks can be analyzed with AI to automatically extract company information, team details, and key metrics.
+  The AI endpoint automatically extracts URLs from text, prioritizes deck platforms (DocSend, Papermark, etc.),
+  and can analyze content to auto-detect the source and suggest a pipeline status.
 </Tip>
 
 ## Metadata
 
-Use the `metadata` field to store custom data specific to your workflow:
+The `metadata` field contains structured data including AI-extracted information and custom fields:
 
 ```json
 {
   "metadata": {
-    "industry": "SaaS",
-    "stage": "Series A",
-    "location": "San Francisco, CA",
-    "check_size": "$2M",
-    "lead_partner": "Jane Smith",
-    "priority": "high"
+    "founders": [
+      {
+        "name": "Jane Smith",
+        "title": "CEO/Co-Founder",
+        "email": "jane@example.com",
+        "linkedin_profile": "https://linkedin.com/in/janesmith",
+        "background": "Former engineer at Google"
+      }
+    ],
+    "ai_analysis": "B2B SaaS platform for enterprise workflow automation...",
+    "analyzed_at": "2024-01-15T12:45:00Z",
+    "user_preferences": [
+      {
+        "type": "select",
+        "field": "Industry",
+        "value": "SaaS",
+        "options": ["SaaS", "Fintech", "AI/ML", "Developer Tools"],
+        "show_in_table": true
+      },
+      {
+        "type": "text",
+        "field": "Check Size",
+        "value": "$2M",
+        "show_in_table": false
+      }
+    ]
   }
 }
 ```
 
+### Metadata Structure
+
+| Field | Description |
+|-------|-------------|
+| `founders` | Array of founder/team member objects (typically AI-extracted from pitch deck) |
+| `ai_analysis` | AI-generated company summary |
+| `analyzed_at` | Timestamp of last AI analysis |
+| `user_preferences` | Custom fields configured by your account |
+
 <Note>
-  Metadata is stored as JSONB in the database, so you can store any valid JSON structure.
+  Custom fields (`user_preferences`) are configured at the account level and can include text, boolean, or select types.
 </Note>
 
 ## Related Resources

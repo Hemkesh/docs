@@ -69,19 +69,32 @@ You'll receive a response like this:
     "companies": [
       {
         "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+        "account_id": "550e8400-e29b-41d4-a716-446655440000",
         "name": "Acme Corp",
-        "website": "https://acme.com",
-        "description": "AI-powered automation platform",
+        "deck_link": "https://docsend.com/view/example",
         "visibility": "team",
         "source": "email",
-        "created_at": "2024-01-15T10:30:00Z"
+        "company_status_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "notes": "Met at Demo Day 2024",
+        "created_at": "2024-01-15T10:30:00Z",
+        "updated_at": "2024-01-15T10:30:00Z",
+        "metadata": {
+          "ai_analysis": "B2B SaaS for workflow automation",
+          "founders": []
+        },
+        "company_status": {
+          "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+          "status_text": "Initial Review",
+          "color": "#3B82F6",
+          "rank": 1
+        }
       }
     ],
     "pagination": {
       "page": 1,
       "limit": 20,
-      "total": 45,
-      "total_pages": 3
+      "has_next": true,
+      "has_prev": false
     }
   },
   "authType": "api_key"
@@ -90,37 +103,41 @@ You'll receive a response like this:
 
 ## Create a company
 
-Now let's add a new company to your pipeline:
+The recommended way to create companies is using the intelligent AI upload endpoint.
+It can process emails, form submissions, or any text containing pitch deck URLs:
 
 <CodeGroup>
 
 ```bash cURL
-curl -X POST "https://useroulette.com/api/v1/companies" \
+curl -X POST "https://useroulette.com/api/v1/companies/upload/ai" \
   -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "account_id": "YOUR_ACCOUNT_ID",
-    "name": "TechStartup Inc",
-    "website": "https://techstartup.io",
-    "description": "Next-gen developer tools",
-    "source": "referral"
-  }'
+  -F "account_id=YOUR_ACCOUNT_ID" \
+  -F "text=From: founder@startup.com
+Subject: TechStartup Series A
+
+Hi, here's our pitch deck: https://docsend.com/view/example123
+
+We're raising a $5M Series A." \
+  -F "name=TechStartup Inc"
 ```
 
 ```javascript JavaScript
-const response = await fetch('https://useroulette.com/api/v1/companies', {
+const formData = new FormData();
+formData.append('account_id', 'YOUR_ACCOUNT_ID');
+formData.append('text', `From: founder@startup.com
+Subject: TechStartup Series A
+
+Hi, here's our pitch deck: https://docsend.com/view/example123
+
+We're raising a $5M Series A.`);
+formData.append('name', 'TechStartup Inc');
+
+const response = await fetch('https://useroulette.com/api/v1/companies/upload/ai', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer YOUR_API_KEY',
-    'Content-Type': 'application/json'
+    'Authorization': 'Bearer YOUR_API_KEY'
   },
-  body: JSON.stringify({
-    account_id: 'YOUR_ACCOUNT_ID',
-    name: 'TechStartup Inc',
-    website: 'https://techstartup.io',
-    description: 'Next-gen developer tools',
-    source: 'referral'
-  })
+  body: formData
 });
 
 const data = await response.json();
@@ -131,17 +148,19 @@ console.log(data);
 import requests
 
 response = requests.post(
-    'https://useroulette.com/api/v1/companies',
+    'https://useroulette.com/api/v1/companies/upload/ai',
     headers={
-        'Authorization': 'Bearer YOUR_API_KEY',
-        'Content-Type': 'application/json'
+        'Authorization': 'Bearer YOUR_API_KEY'
     },
-    json={
+    data={
         'account_id': 'YOUR_ACCOUNT_ID',
-        'name': 'TechStartup Inc',
-        'website': 'https://techstartup.io',
-        'description': 'Next-gen developer tools',
-        'source': 'referral'
+        'text': '''From: founder@startup.com
+Subject: TechStartup Series A
+
+Hi, here's our pitch deck: https://docsend.com/view/example123
+
+We're raising a $5M Series A.''',
+        'name': 'TechStartup Inc'
     }
 )
 
@@ -149,6 +168,12 @@ print(response.json())
 ```
 
 </CodeGroup>
+
+The AI endpoint automatically:
+- Extracts pitch deck URLs from the text
+- Downloads and stores the deck
+- Detects the company source (email, form, referral, etc.)
+- Suggests an appropriate pipeline status
 
 <Tip>
   You can find your `account_id` in the URL when viewing your dashboard:
