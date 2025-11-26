@@ -56,32 +56,32 @@
               success: true
               data:
                 companies:
-                  - id: "0bbd2344-7c60-4541-80ca-b3a5eb862e5c"
-                    account_id: "90d4ca07-8849-4fa9-b149-5f10d8635449"
-                    name: "Freya's Mirror"
-                    deck_link: "https://storage.tally.so/private/Deck.pdf?id=J8DMJJ&accessToken=..."
+                  - id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    account_id: "11111111-2222-3333-4444-555555555555"
+                    name: "Acme Technologies"
+                    deck_link: "https://docsend.com/view/example123"
                     visibility: "team"
                     source: "form"
                     company_status_id: null
-                    notes: "Company deck imported from direct PDF link"
-                    created_at: "2025-11-26T16:09:55.712555+00:00"
-                    updated_at: "2025-11-26T16:10:35.14483+00:00"
-                    created_by: "5e417c4b-ca57-4545-a995-a805a55e5b71"
-                    updated_by: "5e417c4b-ca57-4545-a995-a805a55e5b71"
+                    notes: "Met at TechCrunch Disrupt 2024"
+                    created_at: "2024-01-15T10:30:00.000000+00:00"
+                    updated_at: "2024-01-15T12:45:00.000000+00:00"
+                    created_by: "user-uuid-1234"
+                    updated_by: "user-uuid-1234"
                     assignees: []
                     company_status: null
                     metadata:
                       founders:
-                        - name: "Fabian Jichi"
-                          email: "fabian@freyasmirror.ai"
-                          title: "CEO/Founder"
-                          linkedin_profile: "https://www.linkedin.com/in/fabian-jichi/"
-                      ai_analysis: "Virtual try-on solution for fashion e-commerce..."
-                      analyzed_at: "2025-11-26T16:10:35.114Z"
+                        - name: "Jane Smith"
+                          email: "jane@example.com"
+                          title: "CEO/Co-Founder"
+                          linkedin_profile: "https://www.linkedin.com/in/example/"
+                      ai_analysis: "B2B SaaS platform for enterprise workflow automation..."
+                      analyzed_at: "2024-01-15T12:45:00.000Z"
                       user_preferences:
                         - type: "text"
                           field: "Website"
-                          value: "https://www.freyasmirror.ai/"
+                          value: "https://example.com"
                           options: []
                           show_in_table: true
                 pagination:

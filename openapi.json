@@ -174,36 +174,36 @@
                   "data": {
                     "companies": [
                       {
-                        "id": "0bbd2344-7c60-4541-80ca-b3a5eb862e5c",
-                        "account_id": "90d4ca07-8849-4fa9-b149-5f10d8635449",
-                        "name": "Freya's Mirror",
-                        "deck_link": "https://storage.tally.so/private/Deck.pdf?id=J8DMJJ&accessToken=...",
+                        "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                        "account_id": "11111111-2222-3333-4444-555555555555",
+                        "name": "Acme Technologies",
+                        "deck_link": "https://docsend.com/view/example123",
                         "visibility": "team",
                         "source": "form",
                         "company_status_id": null,
-                        "notes": "Company deck imported from direct PDF link",
-                        "created_at": "2025-11-26T16:09:55.712555+00:00",
-                        "updated_at": "2025-11-26T16:10:35.14483+00:00",
-                        "created_by": "5e417c4b-ca57-4545-a995-a805a55e5b71",
-                        "updated_by": "5e417c4b-ca57-4545-a995-a805a55e5b71",
+                        "notes": "Met at TechCrunch Disrupt 2024",
+                        "created_at": "2024-01-15T10:30:00.000000+00:00",
+                        "updated_at": "2024-01-15T12:45:00.000000+00:00",
+                        "created_by": "user-uuid-1234",
+                        "updated_by": "user-uuid-1234",
                         "assignees": [],
                         "company_status": null,
                         "metadata": {
                           "founders": [
                             {
-                              "name": "Fabian Jichi",
-                              "email": "fabian@freyasmirror.ai",
-                              "title": "CEO/Founder",
-                              "linkedin_profile": "https://www.linkedin.com/in/fabian-jichi/"
+                              "name": "Jane Smith",
+                              "email": "jane@example.com",
+                              "title": "CEO/Co-Founder",
+                              "linkedin_profile": "https://www.linkedin.com/in/example/"
                             }
                           ],
-                          "ai_analysis": "Virtual try-on solution for fashion e-commerce...",
-                          "analyzed_at": "2025-11-26T16:10:35.114Z",
+                          "ai_analysis": "B2B SaaS platform for enterprise workflow automation...",
+                          "analyzed_at": "2024-01-15T12:45:00.000Z",
                           "user_preferences": [
                             {
                               "type": "text",
                               "field": "Website",
-                              "value": "https://www.freyasmirror.ai/",
+                              "value": "https://example.com",
                               "options": [],
                               "show_in_table": true
                             }
@@ -1310,133 +1310,6 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
-          }
-        }
-      }
-    },
-    "/accounts/{account_id}/bulk-upload": {
-      "post": {
-        "operationId": "bulkUpload",
-        "summary": "Bulk upload companies",
-        "description": "Import multiple companies at once from a CSV file or JSON array.\nSupports mapping columns/fields to company properties.\n",
-        "tags": [
-          "Companies"
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/AccountIdParam"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "file": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "CSV file with company data"
-                  },
-                  "mapping": {
-                    "type": "string",
-                    "description": "JSON string mapping CSV columns to company fields.\nExample: {\"Company Name\": \"name\", \"Website\": \"website\"}\n"
-                  },
-                  "default_status_id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Default status for imported companies"
-                  }
-                }
-              }
-            },
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "companies": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/CompanyCreate"
-                    },
-                    "maxItems": 500
-                  },
-                  "default_status_id": {
-                    "type": "string",
-                    "format": "uuid"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Bulk upload results",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "imported_count": {
-                          "type": "integer",
-                          "description": "Number of companies successfully imported"
-                        },
-                        "failed_count": {
-                          "type": "integer",
-                          "description": "Number of companies that failed to import"
-                        },
-                        "errors": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "row": {
-                                "type": "integer"
-                              },
-                              "error": {
-                                "type": "string"
-                              }
-                            }
-                          },
-                          "description": "Details about failed imports"
-                        }
-                      }
-                    }
-                  }
-                },
-                "example": {
-                  "success": true,
-                  "data": {
-                    "imported_count": 48,
-                    "failed_count": 2,
-                    "errors": [
-                      {
-                        "row": 15,
-                        "error": "Invalid website URL format"
-                      },
-                      {
-                        "row": 32,
-                        "error": "Duplicate company name"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
           }
         }
       }
@@ -4654,26 +4527,26 @@
             "type": "string",
             "format": "uuid",
             "description": "Unique identifier for the company",
-            "example": "0bbd2344-7c60-4541-80ca-b3a5eb862e5c"
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
           },
           "account_id": {
             "type": "string",
             "format": "uuid",
             "description": "Account/team this company belongs to",
-            "example": "90d4ca07-8849-4fa9-b149-5f10d8635449"
+            "example": "11111111-2222-3333-4444-555555555555"
           },
           "name": {
             "type": "string",
             "description": "Company name",
-            "example": "Freya's Mirror",
+            "example": "Acme Technologies",
             "maxLength": 255
           },
           "deck_link": {
             "type": "string",
             "format": "uri",
             "nullable": true,
-            "description": "URL to the pitch deck (external link or Tally storage URL)",
-            "example": "https://storage.tally.so/private/Deck.pdf?id=J8DMJJ&accessToken=..."
+            "description": "URL to the pitch deck (external link or storage URL)",
+            "example": "https://docsend.com/view/example123"
           },
           "deck_storage_path": {
             "type": "string",
@@ -4717,7 +4590,7 @@
             "type": "string",
             "nullable": true,
             "description": "Internal notes about the company (not visible to the company)",
-            "example": "Company deck imported from direct PDF link"
+            "example": "Met at TechCrunch Disrupt. Strong technical team."
           },
           "company_status_id": {
             "type": "string",
@@ -4756,26 +4629,26 @@
             "format": "uuid",
             "nullable": true,
             "description": "User ID who created this company record",
-            "example": "5e417c4b-ca57-4545-a995-a805a55e5b71"
+            "example": "user-uuid-1234"
           },
           "updated_by": {
             "type": "string",
             "format": "uuid",
             "nullable": true,
             "description": "User ID who last updated this company record",
-            "example": "5e417c4b-ca57-4545-a995-a805a55e5b71"
+            "example": "user-uuid-1234"
           },
           "created_at": {
             "type": "string",
             "format": "date-time",
             "description": "When the company was created",
-            "example": "2025-11-26T16:09:55.712555+00:00"
+            "example": "2024-01-15T10:30:00Z"
           },
           "updated_at": {
             "type": "string",
             "format": "date-time",
             "description": "When the company was last updated",
-            "example": "2025-11-26T16:10:35.14483+00:00"
+            "example": "2024-01-15T12:45:00Z"
           }
         }
       },
@@ -4794,14 +4667,14 @@
             "type": "string",
             "nullable": true,
             "description": "AI-generated company description/summary",
-            "example": "Virtual try-on solution for fashion e-commerce to personalize customer experience and drive conversion."
+            "example": "B2B SaaS platform providing enterprise workflow automation with AI-powered document processing."
           },
           "analyzed_at": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
             "description": "When the AI analysis was performed",
-            "example": "2025-11-26T16:10:35.114Z"
+            "example": "2024-01-15T12:45:00Z"
           },
           "user_preferences": {
             "type": "array",
@@ -4820,39 +4693,39 @@
           "name": {
             "type": "string",
             "description": "Full name",
-            "example": "Fabian Jichi"
+            "example": "Jane Smith"
           },
           "email": {
             "type": "string",
             "format": "email",
             "nullable": true,
             "description": "Email address",
-            "example": "fabian@freyasmirror.ai"
+            "example": "jane@example.com"
           },
           "phone": {
             "type": "string",
             "nullable": true,
             "description": "Phone number",
-            "example": "+40727129962"
+            "example": "+1-555-123-4567"
           },
           "title": {
             "type": "string",
             "nullable": true,
             "description": "Job title/role",
-            "example": "CEO/Founder"
+            "example": "CEO/Co-Founder"
           },
           "background": {
             "type": "string",
             "nullable": true,
             "description": "Professional background summary",
-            "example": "2nd time Startup Founder, ex Lead AI Engineer, 7 years experience in AI"
+            "example": "Former engineer at Google, 10 years in enterprise software"
           },
           "linkedin_profile": {
             "type": "string",
             "format": "uri",
             "nullable": true,
             "description": "LinkedIn profile URL",
-            "example": "https://www.linkedin.com/in/fabian-jichi/"
+            "example": "https://www.linkedin.com/in/example/"
           }
         }
       },

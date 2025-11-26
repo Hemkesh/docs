@@ -12,23 +12,23 @@ Company:
       type: string
       format: uuid
       description: Unique identifier for the company
-      example: "0bbd2344-7c60-4541-80ca-b3a5eb862e5c"
+      example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
     account_id:
       type: string
       format: uuid
       description: Account/team this company belongs to
-      example: "90d4ca07-8849-4fa9-b149-5f10d8635449"
+      example: "11111111-2222-3333-4444-555555555555"
     name:
       type: string
       description: Company name
-      example: "Freya's Mirror"
+      example: "Acme Technologies"
       maxLength: 255
     deck_link:
       type: string
       format: uri
       nullable: true
-      description: URL to the pitch deck (external link or Tally storage URL)
-      example: "https://storage.tally.so/private/Deck.pdf?id=J8DMJJ&accessToken=..."
+      description: URL to the pitch deck (external link or storage URL)
+      example: "https://docsend.com/view/example123"
     deck_storage_path:
       type: string
       nullable: true
@@ -61,7 +61,7 @@ Company:
       type: string
       nullable: true
       description: Internal notes about the company (not visible to the company)
-      example: "Company deck imported from direct PDF link"
+      example: "Met at TechCrunch Disrupt. Strong technical team."
     company_status_id:
       type: string
       format: uuid
@@ -90,23 +90,23 @@ Company:
       format: uuid
       nullable: true
       description: User ID who created this company record
-      example: "5e417c4b-ca57-4545-a995-a805a55e5b71"
+      example: "user-uuid-1234"
     updated_by:
       type: string
       format: uuid
       nullable: true
       description: User ID who last updated this company record
-      example: "5e417c4b-ca57-4545-a995-a805a55e5b71"
+      example: "user-uuid-1234"
     created_at:
       type: string
       format: date-time
       description: When the company was created
-      example: "2025-11-26T16:09:55.712555+00:00"
+      example: "2024-01-15T10:30:00Z"
     updated_at:
       type: string
       format: date-time
       description: When the company was last updated
-      example: "2025-11-26T16:10:35.14483+00:00"
+      example: "2024-01-15T12:45:00Z"
 
 CompanyMetadata:
   type: object
@@ -123,13 +123,13 @@ CompanyMetadata:
       type: string
       nullable: true
       description: AI-generated company description/summary
-      example: "Virtual try-on solution for fashion e-commerce to personalize customer experience and drive conversion."
+      example: "B2B SaaS platform providing enterprise workflow automation with AI-powered document processing."
     analyzed_at:
       type: string
       format: date-time
       nullable: true
       description: When the AI analysis was performed
-      example: "2025-11-26T16:10:35.114Z"
+      example: "2024-01-15T12:45:00Z"
     user_preferences:
       type: array
       description: Custom fields configured by the account for tracking company data
@@ -144,34 +144,34 @@ Founder:
     name:
       type: string
       description: Full name
-      example: "Fabian Jichi"
+      example: "Jane Smith"
     email:
       type: string
       format: email
       nullable: true
       description: Email address
-      example: "fabian@freyasmirror.ai"
+      example: "jane@example.com"
     phone:
       type: string
       nullable: true
       description: Phone number
-      example: "+40727129962"
+      example: "+1-555-123-4567"
     title:
       type: string
       nullable: true
       description: Job title/role
-      example: "CEO/Founder"
+      example: "CEO/Co-Founder"
     background:
       type: string
       nullable: true
       description: Professional background summary
-      example: "2nd time Startup Founder, ex Lead AI Engineer, 7 years experience in AI"
+      example: "Former engineer at Google, 10 years in enterprise software"
     linkedin_profile:
       type: string
       format: uri
       nullable: true
       description: LinkedIn profile URL
-      example: "https://www.linkedin.com/in/fabian-jichi/"
+      example: "https://www.linkedin.com/in/example/"
 
 UserPreference:
   type: object
