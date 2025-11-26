@@ -1,0 +1,75 @@
+# Common Schema Definitions
+
+Error:
+  type: object
+  required:
+    - success
+    - error
+  properties:
+    success:
+      type: boolean
+      example: false
+    error:
+      type: string
+      description: Human-readable error message
+      example: "Invalid request body"
+    data:
+      type: "null"
+      example: null
+    authType:
+      type: string
+      enum: [api_key, session, jwt]
+      example: api_key
+
+Pagination:
+  type: object
+  required:
+    - page
+    - limit
+    - total
+    - total_pages
+  properties:
+    page:
+      type: integer
+      description: Current page number
+      example: 1
+    limit:
+      type: integer
+      description: Items per page
+      example: 20
+    total:
+      type: integer
+      description: Total number of items
+      example: 150
+    total_pages:
+      type: integer
+      description: Total number of pages
+      example: 8
+    has_next:
+      type: boolean
+      description: Whether there is a next page
+      example: true
+    has_prev:
+      type: boolean
+      description: Whether there is a previous page
+      example: false
+
+Timestamp:
+  type: string
+  format: date-time
+  description: ISO 8601 timestamp
+  example: "2024-01-15T10:30:00Z"
+
+UUID:
+  type: string
+  format: uuid
+  description: Universally unique identifier
+  example: "550e8400-e29b-41d4-a716-446655440000"
+
+Metadata:
+  type: object
+  additionalProperties: true
+  description: Arbitrary key-value metadata
+  example:
+    custom_field: "custom_value"
+    priority: "high"

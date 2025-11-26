@@ -1,0 +1,163 @@
+---
+title: "Authentication"
+description: "How to authenticate with the Roulette API"
+---
+
+## API Keys
+
+All API requests require authentication using a Bearer token. Include your API key in the `Authorization` header of every request:
+
+```bash
+Authorization: Bearer YOUR_API_KEY
+```
+
+## Getting your API Key
+
+<Steps>
+  <Step title="Access API Settings">
+    Log into your [Roulette dashboard](https://app.useroulette.com) and navigate to **Settings** → **API Keys**.
+  </Step>
+  <Step title="Create a New Key">
+    Click **Create API Key** and give it a descriptive name (e.g., "Production", "Development", "Zapier Integration").
+  </Step>
+  <Step title="Copy and Store Securely">
+    Copy the generated API key immediately. For security reasons, you won't be able to see the full key again.
+
+    <Warning>
+      Never share your API key or commit it to version control. Use environment variables to store it securely.
+    </Warning>
+  </Step>
+</Steps>
+
+## Making Authenticated Requests
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET "https://app.useroulette.com/api/v1/companies" \
+  -H "Authorization: Bearer rk_live_abc123xyz..." \
+  -H "Content-Type: application/json"
+```
+
+```javascript JavaScript
+const API_KEY = process.env.ROULETTE_API_KEY;
+
+const response = await fetch('https://app.useroulette.com/api/v1/companies', {
+  headers: {
+    'Authorization': `Bearer ${API_KEY}`,
+    'Content-Type': 'application/json'
+  }
+});
+```
+
+```python Python
+import os
+import requests
+
+API_KEY = os.environ.get('ROULETTE_API_KEY')
+
+response = requests.get(
+    'https://app.useroulette.com/api/v1/companies',
+    headers={
+        'Authorization': f'Bearer {API_KEY}',
+        'Content-Type': 'application/json'
+    }
+)
+```
+
+</CodeGroup>
+
+## Authentication Errors
+
+If authentication fails, you'll receive a `401 Unauthorized` response:
+
+```json
+{
+  "success": false,
+  "error": "Invalid or expired API key",
+  "data": null
+}
+```
+
+Common causes of authentication errors:
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| Invalid API key | Key doesn't exist or was deleted | Generate a new API key |
+| Expired API key | Key has passed its expiration date | Create a new key |
+| Missing header | `Authorization` header not included | Add the header to your request |
+| Malformed header | Header format is incorrect | Use `Bearer YOUR_KEY` format |
+
+## API Key Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use Environment Variables">
+    Never hardcode API keys in your source code. Use environment variables:
+
+    ```bash
+    # .env file (don't commit this!)
+    ROULETTE_API_KEY=rk_live_abc123xyz...
+    ```
+
+    ```javascript
+    // Access in your code
+    const apiKey = process.env.ROULETTE_API_KEY;
+    ```
+  </Accordion>
+
+  <Accordion title="Use Different Keys for Different Environments">
+    Create separate API keys for development, staging, and production. This allows you to:
+    - Rotate keys independently
+    - Track usage per environment
+    - Limit blast radius if a key is compromised
+  </Accordion>
+
+  <Accordion title="Rotate Keys Regularly">
+    Periodically rotate your API keys, especially for production systems. You can have multiple active keys to allow for zero-downtime rotation.
+  </Accordion>
+
+  <Accordion title="Monitor Key Usage">
+    Regularly check your API key usage in the dashboard to detect any unusual activity.
+  </Accordion>
+</AccordionGroup>
+
+## Rate Limiting
+
+API requests are rate limited to ensure fair usage:
+
+- **1000 requests** per minute per API key
+- **100 requests** per second per API key
+
+Rate limit information is included in response headers:
+
+| Header | Description |
+|--------|-------------|
+| `X-RateLimit-Limit` | Maximum requests allowed per window |
+| `X-RateLimit-Remaining` | Requests remaining in current window |
+| `X-RateLimit-Reset` | Unix timestamp when the window resets |
+
+When you exceed the rate limit, you'll receive a `429 Too Many Requests` response:
+
+```json
+{
+  "success": false,
+  "error": "Rate limit exceeded. Please retry after 60 seconds.",
+  "data": null
+}
+```
+
+<Tip>
+  Implement exponential backoff in your application to gracefully handle rate limits.
+</Tip>
+
+## Permissions
+
+Your API key inherits the permissions of your user account. This means:
+
+- You can only access data for accounts/teams you're a member of
+- Row Level Security (RLS) policies apply to all API requests
+- Admin actions require admin-level account permissions
+
+<Note>
+  If you need access to data across multiple teams, make sure your user account has been invited to those teams.
+</Note>

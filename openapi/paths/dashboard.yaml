@@ -1,0 +1,292 @@
+# Dashboard API Endpoints
+
+/accounts/{account_id}/dashboard:
+  get:
+    operationId: getDashboard
+    summary: Get dashboard data
+    description: |
+      Retrieve aggregated dashboard data including statistics,
+      pipeline summary, recent activity, and charts.
+
+      This endpoint is optimized for performance and returns
+      pre-computed metrics where possible.
+    tags:
+      - Dashboard
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: activity_limit
+        in: query
+        required: false
+        description: Maximum number of recent activity items to return
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+      - name: chart_days
+        in: query
+        required: false
+        description: Number of days to include in chart data
+        schema:
+          type: integer
+          minimum: 7
+          maximum: 365
+          default: 30
+    responses:
+      '200':
+        description: Dashboard data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardResponse'
+            example:
+              success: true
+              data:
+                stats:
+                  total_companies: 150
+                  companies_this_month: 12
+                  active_deals: 45
+                  meetings_this_week: 8
+                pipeline_summary:
+                  - status_id: "uuid-1"
+                    status_name: "Initial Review"
+                    color: "#6B7280"
+                    count: 45
+                  - status_id: "uuid-2"
+                    status_name: "Due Diligence"
+                    color: "#3B82F6"
+                    count: 23
+                  - status_id: "uuid-3"
+                    status_name: "Partner Meeting"
+                    color: "#8B5CF6"
+                    count: 15
+                recent_activity:
+                  - id: "activity-1"
+                    type: "company_added"
+                    description: "TechStartup Inc was added to pipeline"
+                    company_id: "company-uuid"
+                    company_name: "TechStartup Inc"
+                    created_at: "2024-01-20T14:30:00Z"
+                  - id: "activity-2"
+                    type: "status_changed"
+                    description: "AI Platform moved to Due Diligence"
+                    company_id: "company-uuid-2"
+                    company_name: "AI Platform"
+                    created_at: "2024-01-20T10:15:00Z"
+                charts:
+                  companies_over_time:
+                    - date: "2024-01-20"
+                      count: 3
+                    - date: "2024-01-19"
+                      count: 5
+                    - date: "2024-01-18"
+                      count: 2
+                  source_breakdown:
+                    - source: "email"
+                      count: 45
+                    - source: "referral"
+                      count: 38
+                    - source: "form"
+                      count: 25
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+/accounts/{account_id}/members:
+  get:
+    operationId: listMembers
+    summary: List team members
+    description: |
+      Retrieve all members and pending invitations for the account/team.
+    tags:
+      - Team Members
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+    responses:
+      '200':
+        description: Team members and invitations
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MembersResponse'
+            example:
+              success: true
+              data:
+                members:
+                  - id: "membership-uuid-1"
+                    user_id: "user-uuid-1"
+                    account_id: "account-uuid"
+                    role: "owner"
+                    name: "John Doe"
+                    email: "john@example.com"
+                    picture_url: "https://example.com/avatars/john.jpg"
+                    created_at: "2023-06-01T00:00:00Z"
+                  - id: "membership-uuid-2"
+                    user_id: "user-uuid-2"
+                    account_id: "account-uuid"
+                    role: "admin"
+                    name: "Jane Smith"
+                    email: "jane@example.com"
+                    picture_url: null
+                    created_at: "2023-08-15T00:00:00Z"
+                invitations:
+                  - id: "invite-uuid-1"
+                    account_id: "account-uuid"
+                    email: "newmember@example.com"
+                    role: "member"
+                    invited_by: "user-uuid-1"
+                    expires_at: "2024-02-01T00:00:00Z"
+                    created_at: "2024-01-15T00:00:00Z"
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+/accounts/{account_id}/bulk-upload:
+  post:
+    operationId: bulkUpload
+    summary: Bulk upload companies
+    description: |
+      Import multiple companies at once from a CSV file or JSON array.
+      Supports mapping columns/fields to company properties.
+    tags:
+      - Companies
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              file:
+                type: string
+                format: binary
+                description: CSV file with company data
+              mapping:
+                type: string
+                description: |
+                  JSON string mapping CSV columns to company fields.
+                  Example: {"Company Name": "name", "Website": "website"}
+              default_status_id:
+                type: string
+                format: uuid
+                description: Default status for imported companies
+        application/json:
+          schema:
+            type: object
+            properties:
+              companies:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompanyCreate'
+                maxItems: 500
+              default_status_id:
+                type: string
+                format: uuid
+    responses:
+      '200':
+        description: Bulk upload results
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    imported_count:
+                      type: integer
+                      description: Number of companies successfully imported
+                    failed_count:
+                      type: integer
+                      description: Number of companies that failed to import
+                    errors:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          row:
+                            type: integer
+                          error:
+                            type: string
+                      description: Details about failed imports
+            example:
+              success: true
+              data:
+                imported_count: 48
+                failed_count: 2
+                errors:
+                  - row: 15
+                    error: "Invalid website URL format"
+                  - row: 32
+                    error: "Duplicate company name"
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+
+/accounts/{account_id}/ai-credits/checkout:
+  post:
+    operationId: createAiCreditsCheckout
+    summary: Purchase AI credits
+    description: |
+      Create a checkout session to purchase additional AI credits
+      for features like pitch deck analysis and email processing.
+    tags:
+      - Dashboard
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - credits_package
+            properties:
+              credits_package:
+                type: string
+                enum: [starter, professional, enterprise]
+                description: |
+                  Credit package to purchase:
+                  - `starter`: 100 credits
+                  - `professional`: 500 credits
+                  - `enterprise`: 2000 credits
+              success_url:
+                type: string
+                format: uri
+                description: URL to redirect after successful payment
+              cancel_url:
+                type: string
+                format: uri
+                description: URL to redirect if payment is cancelled
+    responses:
+      '200':
+        description: Checkout session created
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    checkout_url:
+                      type: string
+                      format: uri
+                      description: URL to redirect user to for payment
+                    session_id:
+                      type: string
+                      description: Stripe checkout session ID
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'

@@ -1,0 +1,421 @@
+# Company Schema Definitions
+
+Company:
+  type: object
+  required:
+    - id
+    - account_id
+    - created_at
+    - updated_at
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Unique identifier for the company
+      example: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+    account_id:
+      type: string
+      format: uuid
+      description: Account/team this company belongs to
+      example: "550e8400-e29b-41d4-a716-446655440000"
+    name:
+      type: string
+      description: Company name
+      example: "Acme Corp"
+      maxLength: 255
+    website:
+      type: string
+      format: uri
+      description: Company website URL
+      example: "https://acme.com"
+    description:
+      type: string
+      description: Brief description of the company
+      example: "AI-powered automation platform for enterprises"
+    deck_link:
+      type: string
+      format: uri
+      description: URL to the pitch deck (if hosted externally)
+      example: "https://docsend.com/view/xyz123"
+    deck_storage_path:
+      type: string
+      description: Internal storage path for uploaded pitch deck
+      example: "companies/7c9e6679/deck.pdf"
+    notes:
+      type: string
+      description: Internal notes about the company
+      example: "Met at TechCrunch Disrupt. Strong team background."
+    company_status_id:
+      type: string
+      format: uuid
+      nullable: true
+      description: Current deal flow status
+      example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+    visibility:
+      type: string
+      enum: [private, shared, team]
+      description: |
+        Visibility level:
+        - `private`: Only visible to the creator
+        - `shared`: Visible to specific users via company_shared_access
+        - `team`: Visible to all team members
+      default: team
+      example: "team"
+    source:
+      type: string
+      enum: [manual, email, form, referral, website, event, other]
+      description: How the company was added to the pipeline
+      example: "email"
+    metadata:
+      type: object
+      additionalProperties: true
+      description: Custom metadata fields
+      example:
+        industry: "SaaS"
+        stage: "Series A"
+        location: "San Francisco, CA"
+    created_by:
+      type: string
+      format: uuid
+      description: User who created this company record
+      example: "user-uuid-here"
+    created_at:
+      type: string
+      format: date-time
+      description: When the company was created
+      example: "2024-01-15T10:30:00Z"
+    updated_at:
+      type: string
+      format: date-time
+      description: When the company was last updated
+      example: "2024-01-20T14:45:00Z"
+
+CompanyCreate:
+  type: object
+  required:
+    - account_id
+  properties:
+    account_id:
+      type: string
+      format: uuid
+      description: Account/team this company belongs to
+    name:
+      type: string
+      description: Company name
+      maxLength: 255
+    website:
+      type: string
+      format: uri
+      description: Company website URL
+    description:
+      type: string
+      description: Brief description
+    deck_link:
+      type: string
+      format: uri
+      description: External pitch deck URL
+    notes:
+      type: string
+      description: Internal notes
+    company_status_id:
+      type: string
+      format: uuid
+      nullable: true
+      description: Initial deal flow status
+    visibility:
+      type: string
+      enum: [private, shared, team]
+      default: team
+    source:
+      type: string
+      enum: [manual, email, form, referral, website, event, other]
+      default: manual
+    metadata:
+      type: object
+      additionalProperties: true
+
+CompanyUpdate:
+  type: object
+  description: All fields are optional for partial updates
+  properties:
+    name:
+      type: string
+      maxLength: 255
+    website:
+      type: string
+      format: uri
+    description:
+      type: string
+    deck_link:
+      type: string
+      format: uri
+    notes:
+      type: string
+    company_status_id:
+      type: string
+      format: uuid
+      nullable: true
+    visibility:
+      type: string
+      enum: [private, shared, team]
+    source:
+      type: string
+      enum: [manual, email, form, referral, website, event, other]
+    metadata:
+      type: object
+      additionalProperties: true
+
+CompanyListResponse:
+  type: object
+  required:
+    - success
+    - data
+  properties:
+    success:
+      type: boolean
+      example: true
+    data:
+      type: object
+      required:
+        - companies
+        - pagination
+      properties:
+        companies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Company'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    authType:
+      type: string
+      enum: [api_key, session, jwt]
+
+CompanyResponse:
+  type: object
+  required:
+    - success
+    - data
+  properties:
+    success:
+      type: boolean
+      example: true
+    data:
+      type: object
+      required:
+        - company
+      properties:
+        company:
+          $ref: '#/components/schemas/Company'
+        pdf_download_url:
+          type: string
+          format: uri
+          description: Signed URL for downloading the pitch deck PDF (if requested)
+    authType:
+      type: string
+      enum: [api_key, session, jwt]
+
+CompanySharedAccess:
+  type: object
+  required:
+    - id
+    - company_id
+    - user_id
+  properties:
+    id:
+      type: string
+      format: uuid
+    company_id:
+      type: string
+      format: uuid
+    user_id:
+      type: string
+      format: uuid
+    created_at:
+      type: string
+      format: date-time
+
+CompanyAttachment:
+  type: object
+  required:
+    - id
+    - company_id
+    - title
+    - storage_path
+  properties:
+    id:
+      type: string
+      format: uuid
+    company_id:
+      type: string
+      format: uuid
+    title:
+      type: string
+      example: "Financial Projections"
+    description:
+      type: string
+      example: "Q4 2024 financial projections spreadsheet"
+    storage_path:
+      type: string
+    file_type:
+      type: string
+      example: "application/pdf"
+    file_size:
+      type: integer
+      description: File size in bytes
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+BulkActionRequest:
+  type: object
+  required:
+    - company_ids
+    - action
+  properties:
+    company_ids:
+      type: array
+      items:
+        type: string
+        format: uuid
+      minItems: 1
+      maxItems: 100
+      description: List of company IDs to perform the action on
+    action:
+      type: string
+      enum: [update_status, update_source, delete]
+      description: The bulk action to perform
+    company_status_id:
+      type: string
+      format: uuid
+      description: Required when action is 'update_status'
+    source:
+      type: string
+      enum: [manual, email, form, referral, website, event, other]
+      description: Required when action is 'update_source'
+
+BulkActionResponse:
+  type: object
+  required:
+    - success
+    - data
+  properties:
+    success:
+      type: boolean
+      example: true
+    data:
+      type: object
+      properties:
+        updated_count:
+          type: integer
+          description: Number of companies affected
+          example: 5
+        message:
+          type: string
+          example: "Successfully updated 5 companies"
+
+DuplicateGroup:
+  type: object
+  properties:
+    companies:
+      type: array
+      items:
+        $ref: '#/components/schemas/Company'
+    similarity_score:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+      description: How similar the companies are (0-1)
+      example: 0.95
+
+DuplicatesResponse:
+  type: object
+  required:
+    - success
+    - data
+  properties:
+    success:
+      type: boolean
+    data:
+      type: object
+      properties:
+        duplicate_groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/DuplicateGroup'
+        total_duplicates:
+          type: integer
+        total_companies_affected:
+          type: integer
+
+MergeDuplicatesRequest:
+  type: object
+  required:
+    - keep_company_id
+    - delete_company_ids
+  properties:
+    keep_company_id:
+      type: string
+      format: uuid
+      description: The company to keep (others will be merged into this)
+    delete_company_ids:
+      type: array
+      items:
+        type: string
+        format: uuid
+      description: Companies to merge and delete
+    merge_metadata:
+      type: boolean
+      default: true
+      description: Whether to merge metadata from deleted companies
+
+AnalyzeResponse:
+  type: object
+  required:
+    - success
+    - data
+  properties:
+    success:
+      type: boolean
+    data:
+      type: object
+      properties:
+        company_name:
+          type: string
+        description:
+          type: string
+        industry:
+          type: string
+        stage:
+          type: string
+        location:
+          type: string
+        team:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              role:
+                type: string
+              linkedin:
+                type: string
+        funding:
+          type: object
+          properties:
+            amount_raised:
+              type: string
+            target_raise:
+              type: string
+        insights:
+          type: array
+          items:
+            type: string
+        confidence:
+          type: number
+          format: float
+          description: AI confidence score (0-1)

@@ -1,0 +1,98 @@
+# Dashboard Schema Definitions
+
+DashboardData:
+  type: object
+  properties:
+    stats:
+      type: object
+      properties:
+        total_companies:
+          type: integer
+          description: Total number of companies
+          example: 150
+        companies_this_month:
+          type: integer
+          description: Companies added this month
+          example: 12
+        active_deals:
+          type: integer
+          description: Companies in active pipeline stages
+          example: 45
+        meetings_this_week:
+          type: integer
+          description: Meetings scheduled this week
+          example: 8
+    pipeline_summary:
+      type: array
+      items:
+        type: object
+        properties:
+          status_id:
+            type: string
+            format: uuid
+          status_name:
+            type: string
+          color:
+            type: string
+          count:
+            type: integer
+      description: Company counts by pipeline stage
+    recent_activity:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+          type:
+            type: string
+            enum: [company_added, company_updated, status_changed, email_received, meeting_scheduled]
+          description:
+            type: string
+          company_id:
+            type: string
+            format: uuid
+            nullable: true
+          company_name:
+            type: string
+            nullable: true
+          created_at:
+            type: string
+            format: date-time
+      description: Recent activity feed
+    charts:
+      type: object
+      properties:
+        companies_over_time:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              count:
+                type: integer
+          description: Daily company additions
+        source_breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+              count:
+                type: integer
+          description: Companies by source
+
+DashboardResponse:
+  type: object
+  required:
+    - success
+    - data
+  properties:
+    success:
+      type: boolean
+    data:
+      $ref: '#/components/schemas/DashboardData'

@@ -1,80 +1,173 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Get started with the Roulette API in under 5 minutes"
 ---
 
-## Get started in three steps
+## Get your API key
 
-Get your documentation site running locally and make your first customization.
+<Steps>
+  <Step title="Log into Roulette">
+    Go to [app.useroulette.com](https://app.useroulette.com) and sign in to your account.
+  </Step>
+  <Step title="Navigate to Settings">
+    Click on your profile menu and select **Settings** → **API Keys**.
+  </Step>
+  <Step title="Generate a new key">
+    Click **Create API Key**, give it a name (e.g., "Development"), and copy the generated key.
 
-### Step 1: Set up your local environment
+    <Warning>Store your API key securely. It won't be shown again!</Warning>
+  </Step>
+</Steps>
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+## Make your first request
 
-### Step 2: Deploy your changes
+Let's list the companies in your pipeline:
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+<CodeGroup>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+```bash cURL
+curl -X GET "https://app.useroulette.com/api/v1/companies" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json"
+```
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+```javascript JavaScript
+const response = await fetch('https://app.useroulette.com/api/v1/companies', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  }
+});
 
-### Step 3: Go live
+const data = await response.json();
+console.log(data);
+```
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+```python Python
+import requests
+
+response = requests.get(
+    'https://app.useroulette.com/api/v1/companies',
+    headers={
+        'Authorization': 'Bearer YOUR_API_KEY',
+        'Content-Type': 'application/json'
+    }
+)
+
+print(response.json())
+```
+
+</CodeGroup>
+
+You'll receive a response like this:
+
+```json
+{
+  "success": true,
+  "data": {
+    "companies": [
+      {
+        "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+        "name": "Acme Corp",
+        "website": "https://acme.com",
+        "description": "AI-powered automation platform",
+        "visibility": "team",
+        "source": "email",
+        "created_at": "2024-01-15T10:30:00Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 45,
+      "total_pages": 3
+    }
+  },
+  "authType": "api_key"
+}
+```
+
+## Create a company
+
+Now let's add a new company to your pipeline:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://app.useroulette.com/api/v1/companies" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "account_id": "YOUR_ACCOUNT_ID",
+    "name": "TechStartup Inc",
+    "website": "https://techstartup.io",
+    "description": "Next-gen developer tools",
+    "source": "referral"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://app.useroulette.com/api/v1/companies', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    account_id: 'YOUR_ACCOUNT_ID',
+    name: 'TechStartup Inc',
+    website: 'https://techstartup.io',
+    description: 'Next-gen developer tools',
+    source: 'referral'
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://app.useroulette.com/api/v1/companies',
+    headers={
+        'Authorization': 'Bearer YOUR_API_KEY',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'account_id': 'YOUR_ACCOUNT_ID',
+        'name': 'TechStartup Inc',
+        'website': 'https://techstartup.io',
+        'description': 'Next-gen developer tools',
+        'source': 'referral'
+    }
+)
+
+print(response.json())
+```
+
+</CodeGroup>
+
+<Tip>
+  You can find your `account_id` in the URL when viewing your dashboard:
+  `app.useroulette.com/home/{account_id}/...`
+</Tip>
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Authentication" icon="key" href="/authentication">
+    Learn more about API authentication
+  </Card>
+  <Card title="Companies API" icon="building" href="/api-reference/companies/list">
+    Explore all company endpoints
+  </Card>
+  <Card title="Pipeline Management" icon="diagram-project" href="/concepts/pipeline">
+    Understand deal flow statuses
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/concepts/sharing">
+    Set up form integrations
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

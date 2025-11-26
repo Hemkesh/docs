@@ -1,0 +1,184 @@
+# Shared Link Schema Definitions
+
+SharedLink:
+  type: object
+  required:
+    - id
+    - account_id
+    - short_code
+    - created_at
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Unique identifier for the shared link
+    account_id:
+      type: string
+      format: uuid
+      description: Account this link belongs to
+    name:
+      type: string
+      description: Internal name for the shared link
+      example: "Q1 2024 Portfolio for LP"
+    description:
+      type: string
+      description: Description of what's being shared
+    short_code:
+      type: string
+      description: Unique short code for the URL
+      example: "abc123xy"
+    short_url:
+      type: string
+      format: uri
+      description: Full shareable URL
+      example: "https://app.useroulette.com/s/abc123xy"
+    password_protected:
+      type: boolean
+      description: Whether a password is required to access
+    expires_at:
+      type: string
+      format: date-time
+      nullable: true
+      description: When the link expires (null = never)
+    is_active:
+      type: boolean
+      description: Whether the link is currently active
+      default: true
+    companies:
+      type: array
+      items:
+        $ref: '#/components/schemas/SharedLinkCompany'
+      description: Companies included in this shared link
+    view_count:
+      type: integer
+      description: Number of times the link has been accessed
+      example: 42
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+SharedLinkCompany:
+  type: object
+  properties:
+    company_id:
+      type: string
+      format: uuid
+    company_name:
+      type: string
+    permissions:
+      type: string
+      enum: [view, view_deck, full]
+      description: |
+        Access level for this company:
+        - `view`: Basic company info only
+        - `view_deck`: Info + pitch deck
+        - `full`: All available information
+
+SharedLinkCreate:
+  type: object
+  required:
+    - name
+    - companies
+  properties:
+    name:
+      type: string
+      description: Internal name for the shared link
+    description:
+      type: string
+    password:
+      type: string
+      description: Optional password protection
+    expires_at:
+      type: string
+      format: date-time
+      description: Optional expiration date
+    companies:
+      type: array
+      items:
+        type: object
+        required:
+          - company_id
+        properties:
+          company_id:
+            type: string
+            format: uuid
+          permissions:
+            type: string
+            enum: [view, view_deck, full]
+            default: view
+      minItems: 1
+
+SharedLinkUpdate:
+  type: object
+  properties:
+    name:
+      type: string
+    description:
+      type: string
+    password:
+      type: string
+      nullable: true
+      description: Set to null to remove password protection
+    expires_at:
+      type: string
+      format: date-time
+      nullable: true
+    is_active:
+      type: boolean
+    companies:
+      type: array
+      items:
+        type: object
+        required:
+          - company_id
+        properties:
+          company_id:
+            type: string
+            format: uuid
+          permissions:
+            type: string
+            enum: [view, view_deck, full]
+
+SharedLinkListResponse:
+  type: object
+  required:
+    - success
+    - data
+  properties:
+    success:
+      type: boolean
+    data:
+      type: object
+      properties:
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/SharedLink'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+SharedLinkAccessLog:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    shared_link_id:
+      type: string
+      format: uuid
+    ip_address:
+      type: string
+      description: Visitor's IP address (anonymized)
+    user_agent:
+      type: string
+      description: Browser/device information
+    country:
+      type: string
+      description: Detected country
+      example: "US"
+    accessed_at:
+      type: string
+      format: date-time

@@ -1,0 +1,310 @@
+# Form Submissions API Endpoints
+
+/accounts/{account_id}/form-submissions:
+  get:
+    operationId: listFormSubmissions
+    summary: List form submissions
+    description: |
+      Retrieve paginated form submissions from integrated platforms
+      (Tally, Specter, etc.) or manually created submissions.
+    tags:
+      - Form Submissions
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - $ref: '#/components/parameters/PageParam'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/SortOrderParam'
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum: [created_at, updated_at]
+          default: created_at
+      - name: company_id
+        in: query
+        required: false
+        description: Filter submissions linked to a specific company
+        schema:
+          type: string
+          format: uuid
+      - name: processed
+        in: query
+        required: false
+        description: Filter by processed status
+        schema:
+          type: boolean
+      - name: integration_type
+        in: query
+        required: false
+        description: Filter by source integration
+        schema:
+          type: string
+          enum: [tally, specter, manual]
+    responses:
+      '200':
+        description: List of form submissions
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormSubmissionListResponse'
+            example:
+              success: true
+              data:
+                submissions:
+                  - id: "sub-uuid-1"
+                    account_id: "account-uuid"
+                    integration_type: "tally"
+                    data:
+                      - key: "company_name"
+                        label: "Company Name"
+                        type: "INPUT_TEXT"
+                        value: "TechStartup Inc"
+                      - key: "email"
+                        label: "Email"
+                        type: "INPUT_EMAIL"
+                        value: "founder@techstartup.com"
+                    processed: false
+                    created_at: "2024-01-15T10:30:00Z"
+                pagination:
+                  page: 1
+                  limit: 10
+                  total: 25
+                  total_pages: 3
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+  post:
+    operationId: createFormSubmission
+    summary: Create a form submission
+    description: |
+      Manually create a form submission record. Useful for importing
+      data from external sources or creating test data.
+    tags:
+      - Form Submissions
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FormSubmissionCreate'
+          example:
+            data:
+              - key: "company_name"
+                label: "Company Name"
+                type: "INPUT_TEXT"
+                value: "New Venture Co"
+              - key: "website"
+                label: "Website"
+                type: "INPUT_LINK"
+                value: "https://newventure.co"
+              - key: "pitch_deck"
+                label: "Pitch Deck"
+                type: "FILE_UPLOAD"
+                value:
+                  - id: "file-1"
+                    name: "pitch.pdf"
+                    url: "https://storage.example.com/pitch.pdf"
+                    size: 2048000
+    responses:
+      '200':
+        description: Submission created
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    submission:
+                      $ref: '#/components/schemas/FormSubmission'
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+
+/accounts/{account_id}/form-submissions/{submission_id}:
+  get:
+    operationId: getFormSubmission
+    summary: Get form submission details
+    description: Retrieve a specific form submission with all field data.
+    tags:
+      - Form Submissions
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: submission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Submission details
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    submission:
+                      $ref: '#/components/schemas/FormSubmission'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+  patch:
+    operationId: updateFormSubmission
+    summary: Update a form submission
+    description: |
+      Update a form submission. Commonly used to mark as processed
+      or link to a company.
+    tags:
+      - Form Submissions
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: submission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              company_id:
+                type: string
+                format: uuid
+                nullable: true
+              processed:
+                type: boolean
+              metadata:
+                type: object
+                additionalProperties: true
+    responses:
+      '200':
+        description: Submission updated
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    submission:
+                      $ref: '#/components/schemas/FormSubmission'
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+  delete:
+    operationId: deleteFormSubmission
+    summary: Delete a form submission
+    description: Permanently delete a form submission.
+    tags:
+      - Form Submissions
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: submission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Submission deleted
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+/accounts/{account_id}/form-submissions/{submission_id}/convert:
+  post:
+    operationId: convertFormSubmissionToCompany
+    summary: Convert submission to company
+    description: |
+      Create a new company from a form submission, automatically
+      mapping form fields to company properties.
+    tags:
+      - Form Submissions
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: submission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              field_mapping:
+                type: object
+                description: Custom field mapping (form field key -> company field)
+                additionalProperties:
+                  type: string
+              company_status_id:
+                type: string
+                format: uuid
+                description: Initial status for the new company
+    responses:
+      '200':
+        description: Company created from submission
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    company:
+                      $ref: '#/components/schemas/Company'
+                    submission:
+                      $ref: '#/components/schemas/FormSubmission'
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'

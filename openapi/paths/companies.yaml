@@ -1,0 +1,702 @@
+# Companies API Endpoints
+
+/companies:
+  get:
+    operationId: listCompanies
+    summary: List companies
+    description: |
+      Retrieve a paginated list of companies in your deal flow pipeline.
+      Supports filtering, sorting, and full-text search.
+    tags:
+      - Companies
+    parameters:
+      - $ref: '#/components/parameters/PageParam'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/SortByParam'
+      - $ref: '#/components/parameters/SortOrderParam'
+      - $ref: '#/components/parameters/SearchParam'
+      - name: visibility
+        in: query
+        required: false
+        description: Filter by visibility level
+        schema:
+          type: string
+          enum: [private, shared, team]
+      - name: source
+        in: query
+        required: false
+        description: Filter by source
+        schema:
+          type: string
+          enum: [manual, email, form, referral, website, event, other]
+      - name: company_status_id
+        in: query
+        required: false
+        description: Filter by status ID. Use 'no_status' for companies without a status.
+        schema:
+          type: string
+      - name: include_pdf_url
+        in: query
+        required: false
+        description: Include signed download URLs for pitch deck PDFs
+        schema:
+          type: boolean
+          default: false
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyListResponse'
+            example:
+              success: true
+              data:
+                companies:
+                  - id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                    account_id: "550e8400-e29b-41d4-a716-446655440000"
+                    name: "Acme Corp"
+                    website: "https://acme.com"
+                    description: "AI-powered automation platform"
+                    visibility: "team"
+                    source: "email"
+                    created_at: "2024-01-15T10:30:00Z"
+                    updated_at: "2024-01-20T14:45:00Z"
+                pagination:
+                  page: 1
+                  limit: 20
+                  total: 45
+                  total_pages: 3
+                  has_next: true
+                  has_prev: false
+              authType: "api_key"
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+  post:
+    operationId: createCompany
+    summary: Create a company
+    description: |
+      Create a new company in your deal flow pipeline.
+    tags:
+      - Companies
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CompanyCreate'
+          example:
+            account_id: "550e8400-e29b-41d4-a716-446655440000"
+            name: "TechStartup Inc"
+            website: "https://techstartup.io"
+            description: "Next-gen developer tools"
+            visibility: "team"
+            source: "referral"
+            metadata:
+              industry: "Developer Tools"
+              stage: "Seed"
+    responses:
+      '200':
+        description: Company created successfully
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyResponse'
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/companies/{id}:
+  get:
+    operationId: getCompany
+    summary: Get company details
+    description: Retrieve detailed information about a specific company.
+    tags:
+      - Companies
+    parameters:
+      - $ref: '#/components/parameters/CompanyIdParam'
+      - name: include_pdf_url
+        in: query
+        required: false
+        description: Include signed download URL for pitch deck PDF
+        schema:
+          type: boolean
+          default: false
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyResponse'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+  patch:
+    operationId: updateCompany
+    summary: Update a company
+    description: |
+      Update company information. Only include fields you want to change.
+    tags:
+      - Companies
+    parameters:
+      - $ref: '#/components/parameters/CompanyIdParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CompanyUpdate'
+          example:
+            name: "Acme Corp (Updated)"
+            company_status_id: "status-uuid-here"
+            metadata:
+              stage: "Series A"
+    responses:
+      '200':
+        description: Company updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyResponse'
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+  delete:
+    operationId: deleteCompany
+    summary: Delete a company
+    description: |
+      Permanently delete a company and all associated data including
+      attachments, notes, and shared access records.
+    tags:
+      - Companies
+    parameters:
+      - $ref: '#/components/parameters/CompanyIdParam'
+    responses:
+      '200':
+        description: Company deleted successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                data:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: "Company deleted successfully"
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/companies/upload:
+  post:
+    operationId: uploadCompany
+    summary: Upload company with pitch deck
+    description: |
+      Create or update a company by uploading a pitch deck PDF or providing
+      a URL to an existing deck. The system will process and store the document.
+
+      **File Upload**: Use `multipart/form-data` with a `file` field.
+
+      **URL Upload**: Use `application/json` with a `url` field.
+    tags:
+      - Companies
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              file:
+                type: string
+                format: binary
+                description: PDF file to upload
+              company_data:
+                type: string
+                description: JSON-encoded company data
+              company_id:
+                type: string
+                format: uuid
+                description: Existing company ID to update (optional)
+        application/json:
+          schema:
+            type: object
+            required:
+              - url
+              - company_data
+            properties:
+              url:
+                type: string
+                format: uri
+                description: URL to fetch the deck from (DocSend, Google Drive, etc.)
+              email:
+                type: string
+                format: email
+                description: Email for password-protected links
+              passcode:
+                type: string
+                description: Passcode for protected links
+              company_data:
+                type: object
+                description: Company data to create/update
+              company_id:
+                type: string
+                format: uuid
+                description: Existing company ID to update
+    responses:
+      '200':
+        description: Company created/updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyResponse'
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/companies/{id}/analyze:
+  post:
+    operationId: analyzeCompany
+    summary: Analyze pitch deck with AI
+    description: |
+      Use AI to analyze the company's pitch deck and extract structured data
+      including company information, team details, funding, and key insights.
+
+      **Note**: This operation consumes AI credits.
+    tags:
+      - Companies
+    parameters:
+      - $ref: '#/components/parameters/CompanyIdParam'
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              extraData:
+                type: object
+                description: Additional context to include in the analysis
+    responses:
+      '200':
+        description: Analysis completed successfully
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyzeResponse'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/companies/{id}/download:
+  get:
+    operationId: downloadCompanyPdf
+    summary: Get pitch deck download URL
+    description: |
+      Generate a signed download URL for the company's pitch deck PDF.
+      URLs are temporary and expire after the specified duration.
+    tags:
+      - Companies
+    parameters:
+      - $ref: '#/components/parameters/CompanyIdParam'
+      - name: expiry_minutes
+        in: query
+        required: false
+        description: URL expiry time in minutes (default varies by plan)
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1440
+    responses:
+      '200':
+        description: Download URL generated
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    download_url:
+                      type: string
+                      format: uri
+                      description: Signed URL for downloading the PDF
+                    expires_at:
+                      type: string
+                      format: date-time
+                      description: When the URL expires
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/companies/bulk-actions:
+  post:
+    operationId: bulkCompanyActions
+    summary: Perform bulk actions on companies
+    description: |
+      Perform bulk operations on multiple companies at once.
+      Supported actions:
+      - `update_status`: Update the deal flow status
+      - `update_source`: Update the source
+      - `delete`: Delete multiple companies
+    tags:
+      - Companies
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BulkActionRequest'
+          examples:
+            updateStatus:
+              summary: Update status for multiple companies
+              value:
+                company_ids:
+                  - "uuid-1"
+                  - "uuid-2"
+                action: "update_status"
+                company_status_id: "status-uuid"
+            deleteCompanies:
+              summary: Delete multiple companies
+              value:
+                company_ids:
+                  - "uuid-1"
+                  - "uuid-2"
+                action: "delete"
+    responses:
+      '200':
+        description: Bulk action completed
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkActionResponse'
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/companies/duplicates:
+  get:
+    operationId: detectDuplicates
+    summary: Detect duplicate companies
+    description: |
+      Analyze your company database and identify potential duplicates
+      based on name similarity and other factors.
+    tags:
+      - Companies
+    parameters:
+      - name: threshold
+        in: query
+        required: false
+        description: Similarity threshold (0-1). Higher = stricter matching.
+        schema:
+          type: number
+          format: float
+          minimum: 0.5
+          maximum: 1.0
+          default: 0.8
+    responses:
+      '200':
+        description: Duplicates detected
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DuplicatesResponse'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+  post:
+    operationId: mergeDuplicates
+    summary: Merge duplicate companies
+    description: |
+      Merge multiple duplicate companies into one. The kept company will
+      inherit contacts, notes, and other associated data from merged companies.
+    tags:
+      - Companies
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MergeDuplicatesRequest'
+    responses:
+      '200':
+        description: Companies merged successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    kept_company:
+                      $ref: '#/components/schemas/Company'
+                    deleted_count:
+                      type: integer
+                    message:
+                      type: string
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/companies/{id}/shares:
+  get:
+    operationId: listCompanyShares
+    summary: List company shares
+    description: |
+      Get the list of users who have access to a shared company.
+      Only applicable for companies with `visibility: shared`.
+    tags:
+      - Companies
+    parameters:
+      - $ref: '#/components/parameters/CompanyIdParam'
+    responses:
+      '200':
+        description: List of shares
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    shares:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/CompanySharedAccess'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+  post:
+    operationId: addCompanyShare
+    summary: Share company with user
+    description: |
+      Grant a user access to a company. The company must have
+      `visibility: shared` for this to work.
+    tags:
+      - Companies
+    parameters:
+      - $ref: '#/components/parameters/CompanyIdParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - user_id
+            properties:
+              user_id:
+                type: string
+                format: uuid
+                description: User ID to share with
+    responses:
+      '200':
+        description: Share added
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    share:
+                      $ref: '#/components/schemas/CompanySharedAccess'
+                    message:
+                      type: string
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+  delete:
+    operationId: removeCompanyShare
+    summary: Remove company share
+    description: Revoke a user's access to a shared company.
+    tags:
+      - Companies
+    parameters:
+      - $ref: '#/components/parameters/CompanyIdParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - user_id
+            properties:
+              user_id:
+                type: string
+                format: uuid
+    responses:
+      '200':
+        description: Share removed
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+/companies/{id}/attachments:
+  post:
+    operationId: uploadCompanyAttachment
+    summary: Upload company attachment
+    description: |
+      Upload additional documents/attachments to a company
+      (financials, legal docs, etc.).
+    tags:
+      - Companies
+    parameters:
+      - $ref: '#/components/parameters/CompanyIdParam'
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required:
+              - file
+              - title
+              - account_id
+            properties:
+              file:
+                type: string
+                format: binary
+                description: File to upload
+              title:
+                type: string
+                description: Attachment title
+              description:
+                type: string
+                description: Optional description
+              account_id:
+                type: string
+                format: uuid
+    responses:
+      '200':
+        description: Attachment uploaded
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    attachment:
+                      $ref: '#/components/schemas/CompanyAttachment'
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
+
+/companies/{id}/enrich:
+  post:
+    operationId: enrichCompany
+    summary: Enrich company data
+    description: |
+      Use external data sources to enrich company information
+      (firmographics, funding history, news, etc.).
+
+      **Note**: This operation may consume enrichment credits.
+    tags:
+      - Companies
+    parameters:
+      - $ref: '#/components/parameters/CompanyIdParam'
+    responses:
+      '200':
+        description: Enrichment completed
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    company:
+                      $ref: '#/components/schemas/Company'
+                    enrichment_data:
+                      type: object
+                      description: Additional data from enrichment
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+      '500':
+        $ref: '#/components/responses/InternalServerError'

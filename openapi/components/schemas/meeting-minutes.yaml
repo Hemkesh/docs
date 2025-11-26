@@ -1,0 +1,129 @@
+# Meeting Minutes Schema Definitions
+
+MeetingMinutes:
+  type: object
+  required:
+    - id
+    - account_id
+    - title
+    - created_at
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Unique identifier for the meeting minutes
+    account_id:
+      type: string
+      format: uuid
+      description: Account this belongs to
+    company_id:
+      type: string
+      format: uuid
+      nullable: true
+      description: Linked company
+    title:
+      type: string
+      description: Meeting title
+      example: "Initial Call - TechStartup Inc"
+    content:
+      type: string
+      description: Meeting notes content (markdown supported)
+      example: |
+        ## Attendees
+        - John Doe (Founder)
+        - Jane Smith (VC Partner)
+
+        ## Discussion Points
+        - Product roadmap overview
+        - Current traction metrics
+        - Funding requirements
+    meeting_date:
+      type: string
+      format: date-time
+      description: When the meeting took place
+    attendees:
+      type: array
+      items:
+        type: string
+      description: List of attendee names
+      example: ["John Doe", "Jane Smith"]
+    processed:
+      type: boolean
+      description: Whether these minutes have been processed/reviewed
+      default: false
+    metadata:
+      type: object
+      additionalProperties: true
+      description: Additional metadata
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+MeetingMinutesCreate:
+  type: object
+  required:
+    - title
+    - content
+  properties:
+    title:
+      type: string
+    content:
+      type: string
+    company_id:
+      type: string
+      format: uuid
+    meeting_date:
+      type: string
+      format: date-time
+    attendees:
+      type: array
+      items:
+        type: string
+    metadata:
+      type: object
+      additionalProperties: true
+
+MeetingMinutesUpdate:
+  type: object
+  properties:
+    title:
+      type: string
+    content:
+      type: string
+    company_id:
+      type: string
+      format: uuid
+      nullable: true
+    meeting_date:
+      type: string
+      format: date-time
+    attendees:
+      type: array
+      items:
+        type: string
+    processed:
+      type: boolean
+    metadata:
+      type: object
+      additionalProperties: true
+
+MeetingMinutesListResponse:
+  type: object
+  required:
+    - success
+    - data
+  properties:
+    success:
+      type: boolean
+    data:
+      type: object
+      properties:
+        meeting_minutes:
+          type: array
+          items:
+            $ref: '#/components/schemas/MeetingMinutes'
+        pagination:
+          $ref: '#/components/schemas/Pagination'

@@ -1,0 +1,83 @@
+# Common Response Definitions
+
+SuccessResponse:
+  description: Successful operation
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - success
+          - data
+        properties:
+          success:
+            type: boolean
+            example: true
+          data:
+            type: object
+          authType:
+            type: string
+            enum: [api_key, session, jwt]
+            example: api_key
+
+ErrorResponse:
+  description: Error response
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Error'
+
+BadRequestError:
+  description: Bad request - invalid parameters or request body
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Error'
+      example:
+        success: false
+        error: "Invalid request body"
+        data: null
+
+UnauthorizedError:
+  description: Unauthorized - missing or invalid API key
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Error'
+      example:
+        success: false
+        error: "Invalid or expired API key"
+        data: null
+
+ForbiddenError:
+  description: Forbidden - insufficient permissions
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Error'
+      example:
+        success: false
+        error: "You do not have permission to access this resource"
+        data: null
+
+NotFoundError:
+  description: Resource not found
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Error'
+      example:
+        success: false
+        error: "Resource not found"
+        data: null
+
+InternalServerError:
+  description: Internal server error
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Error'
+      example:
+        success: false
+        error: "Internal server error"
+        data: null

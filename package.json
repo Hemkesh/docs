@@ -1,0 +1,15 @@
+{
+  "name": "roulette-docs",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bundle": "node scripts/bundle-openapi.mjs",
+    "dev": "mintlify dev",
+    "build": "npm run bundle"
+  },
+  "devDependencies": {
+    "js-yaml": "^4.1.0",
+    "mintlify": "^4.0.0"
+  }
+}

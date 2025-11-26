@@ -1,0 +1,91 @@
+# Team Member Schema Definitions
+
+Member:
+  type: object
+  required:
+    - id
+    - user_id
+    - account_id
+    - role
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Membership record ID
+    user_id:
+      type: string
+      format: uuid
+      description: User's unique identifier
+    account_id:
+      type: string
+      format: uuid
+      description: Account/team ID
+    role:
+      type: string
+      enum: [owner, admin, member]
+      description: Member's role in the team
+    name:
+      type: string
+      description: Member's display name
+      example: "John Doe"
+    email:
+      type: string
+      format: email
+      description: Member's email address
+    picture_url:
+      type: string
+      format: uri
+      nullable: true
+      description: Profile picture URL
+    created_at:
+      type: string
+      format: date-time
+      description: When the user joined the team
+
+Invitation:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    account_id:
+      type: string
+      format: uuid
+    email:
+      type: string
+      format: email
+      description: Invited email address
+    role:
+      type: string
+      enum: [admin, member]
+      description: Role the invitee will have
+    invited_by:
+      type: string
+      format: uuid
+      description: User ID of who sent the invitation
+    expires_at:
+      type: string
+      format: date-time
+    created_at:
+      type: string
+      format: date-time
+
+MembersResponse:
+  type: object
+  required:
+    - success
+    - data
+  properties:
+    success:
+      type: boolean
+    data:
+      type: object
+      properties:
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/Member'
+        invitations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Invitation'

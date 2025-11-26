@@ -1,0 +1,271 @@
+# Company Statuses API Endpoints
+
+/accounts/{account_id}/company-statuses:
+  get:
+    operationId: listCompanyStatuses
+    summary: List company statuses
+    description: |
+      Retrieve all deal flow statuses/stages for an account.
+      Results are ordered by rank (pipeline order), then by creation date.
+    tags:
+      - Company Statuses
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+    responses:
+      '200':
+        description: List of company statuses
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyStatusListResponse'
+            example:
+              success: true
+              data:
+                - id: "uuid-1"
+                  account_id: "account-uuid"
+                  name: "Initial Review"
+                  color: "#6B7280"
+                  rank: 1
+                  is_default: true
+                  created_at: "2024-01-01T00:00:00Z"
+                - id: "uuid-2"
+                  account_id: "account-uuid"
+                  name: "Due Diligence"
+                  color: "#3B82F6"
+                  rank: 2
+                  is_default: false
+                  created_at: "2024-01-01T00:00:00Z"
+                - id: "uuid-3"
+                  account_id: "account-uuid"
+                  name: "Partner Meeting"
+                  color: "#8B5CF6"
+                  rank: 3
+                  is_default: false
+                  created_at: "2024-01-01T00:00:00Z"
+                - id: "uuid-4"
+                  account_id: "account-uuid"
+                  name: "Term Sheet"
+                  color: "#10B981"
+                  rank: 4
+                  is_default: false
+                  created_at: "2024-01-01T00:00:00Z"
+                - id: "uuid-5"
+                  account_id: "account-uuid"
+                  name: "Passed"
+                  color: "#EF4444"
+                  rank: 5
+                  is_default: false
+                  created_at: "2024-01-01T00:00:00Z"
+              authType: "api_key"
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+  post:
+    operationId: createCompanyStatus
+    summary: Create a company status
+    description: |
+      Create a new deal flow status/stage. If rank is not provided,
+      the status is added at the end of the pipeline.
+    tags:
+      - Company Statuses
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CompanyStatusCreate'
+          example:
+            name: "IC Review"
+            color: "#F59E0B"
+            description: "Awaiting Investment Committee review"
+    responses:
+      '200':
+        description: Status created successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  $ref: '#/components/schemas/CompanyStatus'
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+
+/accounts/{account_id}/company-statuses/{status_id}:
+  patch:
+    operationId: updateCompanyStatus
+    summary: Update a company status
+    description: Update the name, color, rank, or other properties of a status.
+    tags:
+      - Company Statuses
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: status_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CompanyStatusUpdate'
+    responses:
+      '200':
+        description: Status updated
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  $ref: '#/components/schemas/CompanyStatus'
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+  delete:
+    operationId: deleteCompanyStatus
+    summary: Delete a company status
+    description: |
+      Delete a deal flow status. Companies with this status will have
+      their status set to null.
+    tags:
+      - Company Statuses
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: status_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Status deleted
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+/accounts/{account_id}/company-status-counts:
+  get:
+    operationId: getCompanyStatusCounts
+    summary: Get company counts by status
+    description: |
+      Retrieve pre-computed counts of companies grouped by their deal flow status.
+      Useful for dashboard displays and pipeline visualization.
+    tags:
+      - Company Statuses
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+    responses:
+      '200':
+        description: Status counts retrieved
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyStatusCountsResponse'
+            example:
+              success: true
+              data:
+                total: 150
+                no_status: 12
+                statuses:
+                  - status_id: "uuid-1"
+                    status_name: "Initial Review"
+                    count: 45
+                  - status_id: "uuid-2"
+                    status_name: "Due Diligence"
+                    count: 23
+                  - status_id: "uuid-3"
+                    status_name: "Partner Meeting"
+                    count: 15
+                  - status_id: "uuid-4"
+                    status_name: "Term Sheet"
+                    count: 8
+                  - status_id: "uuid-5"
+                    status_name: "Passed"
+                    count: 47
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+/accounts/{account_id}/company-settings:
+  get:
+    operationId: getCompanySettings
+    summary: Get company field settings
+    description: |
+      Retrieve custom field configurations for companies in this account.
+      These define additional metadata fields that can be tracked.
+    tags:
+      - Company Settings
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+    responses:
+      '200':
+        description: Company settings retrieved
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    fields:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          name:
+                            type: string
+                          field_type:
+                            type: string
+                            enum: [text, number, boolean, select, date, url]
+                          options:
+                            type: array
+                            items:
+                              type: string
+                            description: For select fields, the available options
+                          required:
+                            type: boolean
+                          order:
+                            type: integer
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'

@@ -1,0 +1,178 @@
+---
+title: "Pipeline & Statuses"
+description: "Managing your deal flow pipeline with custom statuses"
+---
+
+# Pipeline Management
+
+Roulette uses customizable statuses to organize companies through your investment pipeline. Each team can define their own stages to match their unique deal flow process.
+
+## Company Statuses
+
+Statuses represent the stages in your investment pipeline. Common examples include:
+
+<Steps>
+  <Step title="Initial Review">
+    First look at inbound opportunities
+  </Step>
+  <Step title="Deep Dive">
+    Detailed analysis of promising companies
+  </Step>
+  <Step title="Partner Meeting">
+    Presented to the partnership
+  </Step>
+  <Step title="Due Diligence">
+    Active due diligence process
+  </Step>
+  <Step title="Term Sheet">
+    Negotiating investment terms
+  </Step>
+  <Step title="Closed">
+    Investment completed
+  </Step>
+  <Step title="Passed">
+    Decided not to invest
+  </Step>
+</Steps>
+
+## Status Properties
+
+Each status has the following properties:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | UUID | Unique identifier |
+| `name` | string | Display name |
+| `color` | string | Hex color code (e.g., `#3B82F6`) |
+| `rank` | integer | Order in the pipeline |
+| `description` | string | Optional description |
+| `is_default` | boolean | Default status for new companies |
+
+## Creating Custom Statuses
+
+```bash
+curl -X POST "https://app.useroulette.com/api/v1/accounts/{account_id}/company-statuses" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "IC Review",
+    "color": "#F59E0B",
+    "description": "Awaiting Investment Committee review"
+  }'
+```
+
+## Pipeline Visualization
+
+The Kanban view in Roulette displays companies organized by status:
+
+```
+┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
+│  Initial    │  │  Deep Dive  │  │  Partner    │  │   Closed    │
+│  Review     │  │             │  │  Meeting    │  │             │
+├─────────────┤  ├─────────────┤  ├─────────────┤  ├─────────────┤
+│ Company A   │  │ Company C   │  │ Company E   │  │ Company G   │
+│ Company B   │  │ Company D   │  │ Company F   │  │             │
+│             │  │             │  │             │  │             │
+└─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘
+```
+
+## Moving Companies Between Statuses
+
+Update a company's status by setting its `company_status_id`:
+
+<CodeGroup>
+
+```bash cURL
+curl -X PATCH "https://app.useroulette.com/api/v1/companies/{company_id}" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_status_id": "new-status-uuid"
+  }'
+```
+
+```javascript JavaScript
+await fetch(`https://app.useroulette.com/api/v1/companies/${companyId}`, {
+  method: 'PATCH',
+  headers: {
+    'Authorization': `Bearer ${API_KEY}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    company_status_id: 'new-status-uuid'
+  })
+});
+```
+
+</CodeGroup>
+
+## Bulk Status Updates
+
+Move multiple companies at once using the bulk actions endpoint:
+
+```bash
+curl -X POST "https://app.useroulette.com/api/v1/companies/bulk-actions" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_ids": ["uuid-1", "uuid-2", "uuid-3"],
+    "action": "update_status",
+    "company_status_id": "passed-status-uuid"
+  }'
+```
+
+## Status Counts
+
+Get a quick overview of your pipeline with status counts:
+
+```bash
+curl -X GET "https://app.useroulette.com/api/v1/accounts/{account_id}/company-status-counts" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "total": 150,
+    "no_status": 12,
+    "statuses": [
+      { "status_id": "uuid-1", "status_name": "Initial Review", "count": 45 },
+      { "status_id": "uuid-2", "status_name": "Deep Dive", "count": 23 },
+      { "status_id": "uuid-3", "status_name": "Partner Meeting", "count": 15 },
+      { "status_id": "uuid-4", "status_name": "Closed", "count": 8 },
+      { "status_id": "uuid-5", "status_name": "Passed", "count": 47 }
+    ]
+  }
+}
+```
+
+## Reordering Statuses
+
+Update the `rank` property to change the order statuses appear in the pipeline:
+
+```bash
+curl -X PATCH "https://app.useroulette.com/api/v1/accounts/{account_id}/company-statuses/{status_id}" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "rank": 3
+  }'
+```
+
+<Note>
+  Lower rank values appear earlier in the pipeline. Statuses with the same rank are ordered by creation date.
+</Note>
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card title="Company Statuses API" icon="code" href="/api-reference/company-statuses/list">
+    View all status endpoints
+  </Card>
+  <Card title="Dashboard API" icon="gauge" href="/api-reference/dashboard/get">
+    Get pipeline analytics
+  </Card>
+</CardGroup>

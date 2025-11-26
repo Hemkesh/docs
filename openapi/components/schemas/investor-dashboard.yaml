@@ -1,0 +1,107 @@
+# Investor Dashboard Schema Definitions
+
+InvestorDashboard:
+  type: object
+  required:
+    - id
+    - account_id
+    - is_active
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Unique identifier for the dashboard
+    account_id:
+      type: string
+      format: uuid
+      description: Account this dashboard belongs to
+    is_active:
+      type: boolean
+      description: Whether the dashboard is publicly accessible
+    password_protected:
+      type: boolean
+      description: Whether a password is required to access
+    short_code:
+      type: string
+      description: Unique code for the dashboard URL
+      example: "inv-abc123"
+    dashboard_url:
+      type: string
+      format: uri
+      description: Full URL for the investor dashboard
+      example: "https://app.useroulette.com/investor/inv-abc123"
+    shared_permissions:
+      type: array
+      items:
+        type: string
+        enum: [view_portfolio, view_metrics, view_updates, download_reports]
+      description: |
+        What information is shared on the dashboard:
+        - `view_portfolio`: List of portfolio companies
+        - `view_metrics`: Performance metrics and charts
+        - `view_updates`: Company updates and news
+        - `download_reports`: Ability to download reports
+    last_accessed_at:
+      type: string
+      format: date-time
+      nullable: true
+      description: When the dashboard was last viewed
+    access_count:
+      type: integer
+      description: Total number of views
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+InvestorDashboardCreate:
+  type: object
+  properties:
+    password:
+      type: string
+      description: Optional password for access
+    shared_permissions:
+      type: array
+      items:
+        type: string
+        enum: [view_portfolio, view_metrics, view_updates, download_reports]
+      default: [view_portfolio]
+    is_active:
+      type: boolean
+      default: true
+
+InvestorDashboardUpdate:
+  type: object
+  properties:
+    password:
+      type: string
+      nullable: true
+      description: Set to null to remove password protection
+    shared_permissions:
+      type: array
+      items:
+        type: string
+        enum: [view_portfolio, view_metrics, view_updates, download_reports]
+    is_active:
+      type: boolean
+
+InvestorDashboardAccessLog:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    dashboard_id:
+      type: string
+      format: uuid
+    ip_address:
+      type: string
+    user_agent:
+      type: string
+    country:
+      type: string
+    accessed_at:
+      type: string
+      format: date-time

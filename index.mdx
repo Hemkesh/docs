@@ -1,97 +1,61 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: Roulette API Documentation
+description: The complete guide to integrating with the Roulette VC CRM platform
 ---
 
-## Setting up
+# Welcome to Roulette API
 
-Get your documentation site up and running in minutes.
+Roulette is a CRM and automation platform designed specifically for Venture Capital firms. Our API provides programmatic access to manage your deal flow, companies, contacts, and related data.
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get up and running with the Roulette API in 5 minutes
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Authentication" icon="key" href="/authentication">
+    Learn how to authenticate your API requests
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="API Reference" icon="code" href="/api-reference/introduction">
+    Explore all available endpoints
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Core Concepts" icon="lightbulb" href="/concepts/companies">
+    Understand the key concepts of the Roulette platform
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## What can you build?
 
-Everything you need to create world-class documentation.
+The Roulette API enables you to:
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+- **Automate deal flow** - Programmatically add companies from forms, emails, or other sources
+- **Sync data** - Keep your internal systems in sync with your Roulette pipeline
+- **Build integrations** - Connect Roulette with your existing tools and workflows
+- **Generate reports** - Pull data for custom analytics and reporting
+- **Manage sharing** - Create and manage shared links for LPs and co-investors
 
-## Need inspiration?
+## API Features
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<AccordionGroup>
+  <Accordion title="RESTful Design">
+    Our API follows REST conventions with predictable, resource-oriented URLs and standard HTTP methods.
+  </Accordion>
+  <Accordion title="JSON Responses">
+    All responses are returned in JSON format with consistent structure across all endpoints.
+  </Accordion>
+  <Accordion title="Pagination">
+    List endpoints support page-based pagination for efficient data retrieval.
+  </Accordion>
+  <Accordion title="Rate Limiting">
+    Fair usage limits with clear headers to help you manage your request volume.
+  </Accordion>
+</AccordionGroup>
+
+## Need Help?
+
+<CardGroup cols={2}>
+  <Card title="Contact Support" icon="envelope" href="mailto:support@useroulette.com">
+    Reach out to our team for assistance
+  </Card>
+  <Card title="Dashboard" icon="gauge" href="https://app.useroulette.com">
+    Access your Roulette dashboard
+  </Card>
+</CardGroup>

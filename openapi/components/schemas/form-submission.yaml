@@ -1,0 +1,102 @@
+# Form Submission Schema Definitions
+
+FormSubmission:
+  type: object
+  required:
+    - id
+    - account_id
+    - data
+    - created_at
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Unique identifier for the submission
+    account_id:
+      type: string
+      format: uuid
+      description: Account this submission belongs to
+    company_id:
+      type: string
+      format: uuid
+      nullable: true
+      description: Linked company (if matched)
+    integration_type:
+      type: string
+      enum: [tally, specter, manual]
+      description: Source integration that created this submission
+    data:
+      type: object
+      additionalProperties: true
+      description: |
+        Form field data. Structure varies by form/integration.
+        Typically contains an array of field objects with key, label, type, and value.
+      example:
+        - key: "question_abc123"
+          label: "Company Name"
+          type: "INPUT_TEXT"
+          value: "Acme Corp"
+        - key: "question_def456"
+          label: "Contact Email"
+          type: "INPUT_EMAIL"
+          value: "founder@acme.com"
+        - key: "question_ghi789"
+          label: "Funding Stage"
+          type: "MULTIPLE_CHOICE"
+          value: "seed"
+          options:
+            - id: "opt1"
+              text: "Pre-seed"
+            - id: "opt2"
+              text: "Seed"
+            - id: "opt3"
+              text: "Series A"
+    metadata:
+      type: object
+      additionalProperties: true
+      description: Additional metadata about the submission
+    processed:
+      type: boolean
+      description: Whether this submission has been processed/reviewed
+      default: false
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+FormSubmissionCreate:
+  type: object
+  required:
+    - data
+  properties:
+    data:
+      type: object
+      additionalProperties: true
+      description: Form field data
+    company_id:
+      type: string
+      format: uuid
+      description: Link to an existing company
+    metadata:
+      type: object
+      additionalProperties: true
+
+FormSubmissionListResponse:
+  type: object
+  required:
+    - success
+    - data
+  properties:
+    success:
+      type: boolean
+    data:
+      type: object
+      properties:
+        submissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormSubmission'
+        pagination:
+          $ref: '#/components/schemas/Pagination'

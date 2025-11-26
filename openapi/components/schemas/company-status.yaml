@@ -1,0 +1,139 @@
+# Company Status Schema Definitions
+
+CompanyStatus:
+  type: object
+  required:
+    - id
+    - account_id
+    - name
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Unique identifier for the status
+      example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+    account_id:
+      type: string
+      format: uuid
+      description: Account/team this status belongs to
+    name:
+      type: string
+      description: Status name displayed in the pipeline
+      example: "Due Diligence"
+      maxLength: 100
+    color:
+      type: string
+      description: Hex color code for the status
+      pattern: "^#[0-9A-Fa-f]{6}$"
+      example: "#3B82F6"
+    rank:
+      type: integer
+      description: Order position in the pipeline (lower = earlier stage)
+      example: 2
+    description:
+      type: string
+      description: Optional description of this pipeline stage
+      example: "Companies under active due diligence review"
+    is_default:
+      type: boolean
+      description: Whether this is the default status for new companies
+      default: false
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+CompanyStatusCreate:
+  type: object
+  required:
+    - name
+  properties:
+    name:
+      type: string
+      maxLength: 100
+    color:
+      type: string
+      pattern: "^#[0-9A-Fa-f]{6}$"
+      default: "#6B7280"
+    rank:
+      type: integer
+      description: Position in pipeline. If not provided, added at the end.
+    description:
+      type: string
+    is_default:
+      type: boolean
+      default: false
+
+CompanyStatusUpdate:
+  type: object
+  properties:
+    name:
+      type: string
+      maxLength: 100
+    color:
+      type: string
+      pattern: "^#[0-9A-Fa-f]{6}$"
+    rank:
+      type: integer
+    description:
+      type: string
+    is_default:
+      type: boolean
+
+CompanyStatusListResponse:
+  type: object
+  required:
+    - success
+    - data
+  properties:
+    success:
+      type: boolean
+      example: true
+    data:
+      type: array
+      items:
+        $ref: '#/components/schemas/CompanyStatus'
+    authType:
+      type: string
+      enum: [api_key, session, jwt]
+
+CompanyStatusCountsResponse:
+  type: object
+  required:
+    - success
+    - data
+  properties:
+    success:
+      type: boolean
+    data:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total number of companies
+          example: 150
+        no_status:
+          type: integer
+          description: Companies without a status assigned
+          example: 12
+        statuses:
+          type: array
+          items:
+            type: object
+            properties:
+              status_id:
+                type: string
+                format: uuid
+              status_name:
+                type: string
+              count:
+                type: integer
+          example:
+            - status_id: "uuid-1"
+              status_name: "Initial Review"
+              count: 45
+            - status_id: "uuid-2"
+              status_name: "Due Diligence"
+              count: 23

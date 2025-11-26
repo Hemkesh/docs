@@ -1,0 +1,421 @@
+# Emails API Endpoints
+
+/accounts/{account_id}/emails:
+  get:
+    operationId: listEmails
+    summary: List emails
+    description: |
+      Retrieve paginated emails associated with your account.
+      Email content is excluded from list queries for performance;
+      use the single email endpoint to get full content.
+    tags:
+      - Emails
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - $ref: '#/components/parameters/PageParam'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/SortOrderParam'
+      - $ref: '#/components/parameters/SearchParam'
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum: [created_at, updated_at]
+          default: created_at
+      - name: from_email
+        in: query
+        required: false
+        description: Filter by sender email address
+        schema:
+          type: string
+          format: email
+      - name: company_id
+        in: query
+        required: false
+        description: Filter emails linked to a specific company
+        schema:
+          type: string
+          format: uuid
+      - name: processed
+        in: query
+        required: false
+        description: Filter by processed status
+        schema:
+          type: boolean
+      - name: tag
+        in: query
+        required: false
+        description: Filter by tag
+        schema:
+          type: string
+    responses:
+      '200':
+        description: List of emails
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailListResponse'
+            example:
+              success: true
+              data:
+                emails:
+                  - id: "email-uuid-1"
+                    account_id: "account-uuid"
+                    from_email: "founder@startup.com"
+                    subject: "Investment Opportunity - AI Platform"
+                    content_preview: "Hi, I wanted to reach out about our Series A..."
+                    tags: ["warm-intro"]
+                    processed: false
+                    attachments_count: 1
+                    created_at: "2024-01-15T10:30:00Z"
+                pagination:
+                  page: 1
+                  limit: 20
+                  total: 150
+                  total_pages: 8
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+  post:
+    operationId: createEmail
+    summary: Create an email record
+    description: |
+      Manually create an email record. Useful for importing emails
+      from external sources or syncing from email integrations.
+    tags:
+      - Emails
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EmailCreate'
+          example:
+            from_email: "founder@newstartup.com"
+            subject: "Introduction - NewStartup seeking Series A"
+            content: "Hi,\n\nI'm the founder of NewStartup, and I wanted to reach out..."
+            company_ids: ["company-uuid-1"]
+            tags: ["inbound", "series-a"]
+    responses:
+      '200':
+        description: Email created
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    email:
+                      $ref: '#/components/schemas/Email'
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+
+/accounts/{account_id}/emails/{email_id}:
+  get:
+    operationId: getEmail
+    summary: Get email details
+    description: |
+      Retrieve a specific email with full content and attachments.
+    tags:
+      - Emails
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: email_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Email details with full content
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    email:
+                      $ref: '#/components/schemas/EmailDetail'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+  patch:
+    operationId: updateEmail
+    summary: Update an email
+    description: |
+      Update email properties like tags, processed status, or linked companies.
+    tags:
+      - Emails
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: email_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              company_ids:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+              tags:
+                type: array
+                items:
+                  type: string
+              processed:
+                type: boolean
+              metadata:
+                type: object
+                additionalProperties: true
+    responses:
+      '200':
+        description: Email updated
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    email:
+                      $ref: '#/components/schemas/Email'
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+  delete:
+    operationId: deleteEmail
+    summary: Delete an email
+    description: Permanently delete an email and its attachments.
+    tags:
+      - Emails
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: email_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Email deleted
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+/accounts/{account_id}/emails/{email_id}/attachments:
+  get:
+    operationId: listEmailAttachments
+    summary: List email attachments
+    description: Get all attachments for an email with download URLs.
+    tags:
+      - Emails
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: email_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: List of attachments
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    attachments:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/EmailAttachment'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+/accounts/{account_id}/emails/tags:
+  get:
+    operationId: listEmailTags
+    summary: List available email tags
+    description: |
+      Get all tags used in emails for this account, with usage counts.
+    tags:
+      - Emails
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+    responses:
+      '200':
+        description: List of tags
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailTagsResponse'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+
+/emails/{email_id}/analyze:
+  post:
+    operationId: analyzeEmail
+    summary: Analyze email with AI
+    description: |
+      Use AI to analyze email content and extract structured information
+      such as company details, contact info, and intent classification.
+
+      **Note**: This operation consumes AI credits.
+    tags:
+      - Emails
+    parameters:
+      - name: email_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Analysis completed
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    intent:
+                      type: string
+                      enum: [pitch, intro_request, follow_up, meeting_request, other]
+                    company_info:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        website:
+                          type: string
+                        description:
+                          type: string
+                    contact_info:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        email:
+                          type: string
+                        role:
+                          type: string
+                    suggested_actions:
+                      type: array
+                      items:
+                        type: string
+                    confidence:
+                      type: number
+                      format: float
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+/emails/{email_id}/companies:
+  post:
+    operationId: linkEmailToCompanies
+    summary: Link email to companies
+    description: Associate an email with one or more companies.
+    tags:
+      - Emails
+    parameters:
+      - name: email_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - company_ids
+            properties:
+              company_ids:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+                minItems: 1
+    responses:
+      '200':
+        description: Email linked to companies
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    email:
+                      $ref: '#/components/schemas/Email'
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'

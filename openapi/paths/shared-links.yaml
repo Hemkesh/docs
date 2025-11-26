@@ -1,0 +1,311 @@
+# Shared Links API Endpoints
+
+/accounts/{account_id}/shared-links:
+  get:
+    operationId: listSharedLinks
+    summary: List shared links
+    description: |
+      Retrieve all shared links for an account. Shared links allow you to
+      share company portfolios with external parties (LPs, co-investors, etc.)
+      with granular access control.
+    tags:
+      - Shared Links
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - $ref: '#/components/parameters/PageParam'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/SortOrderParam'
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum: [created_at, updated_at, name]
+          default: created_at
+      - name: is_active
+        in: query
+        required: false
+        description: Filter by active status
+        schema:
+          type: boolean
+    responses:
+      '200':
+        description: List of shared links
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SharedLinkListResponse'
+            example:
+              success: true
+              data:
+                links:
+                  - id: "link-uuid-1"
+                    account_id: "account-uuid"
+                    name: "Q1 2024 Portfolio"
+                    short_code: "abc123xy"
+                    short_url: "https://app.useroulette.com/s/abc123xy"
+                    password_protected: true
+                    is_active: true
+                    view_count: 42
+                    created_at: "2024-01-01T00:00:00Z"
+                pagination:
+                  page: 1
+                  limit: 20
+                  total: 5
+                  total_pages: 1
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+  post:
+    operationId: createSharedLink
+    summary: Create a shared link
+    description: |
+      Create a new shared link with selected companies. You can configure
+      password protection, expiration, and per-company access permissions.
+    tags:
+      - Shared Links
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SharedLinkCreate'
+          example:
+            name: "Series A Portfolio for ABC Capital"
+            description: "Selection of our top Series A companies for review"
+            password: "secure123"
+            expires_at: "2024-06-01T00:00:00Z"
+            companies:
+              - company_id: "company-uuid-1"
+                permissions: "view_deck"
+              - company_id: "company-uuid-2"
+                permissions: "view"
+              - company_id: "company-uuid-3"
+                permissions: "full"
+    responses:
+      '200':
+        description: Shared link created
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    link:
+                      $ref: '#/components/schemas/SharedLink'
+            example:
+              success: true
+              data:
+                link:
+                  id: "new-link-uuid"
+                  short_code: "xyz789ab"
+                  short_url: "https://app.useroulette.com/s/xyz789ab"
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+
+/accounts/{account_id}/shared-links/{id}:
+  get:
+    operationId: getSharedLink
+    summary: Get shared link details
+    description: |
+      Retrieve detailed information about a shared link including
+      the list of included companies and their permissions.
+    tags:
+      - Shared Links
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Shared link details
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    link:
+                      $ref: '#/components/schemas/SharedLink'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+  patch:
+    operationId: updateSharedLink
+    summary: Update a shared link
+    description: |
+      Update shared link properties including name, password, expiration,
+      active status, and the list of included companies.
+    tags:
+      - Shared Links
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SharedLinkUpdate'
+          examples:
+            deactivate:
+              summary: Deactivate a link
+              value:
+                is_active: false
+            updateCompanies:
+              summary: Update included companies
+              value:
+                companies:
+                  - company_id: "company-uuid-1"
+                    permissions: "full"
+                  - company_id: "company-uuid-4"
+                    permissions: "view_deck"
+            removePassword:
+              summary: Remove password protection
+              value:
+                password: null
+    responses:
+      '200':
+        description: Shared link updated
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    link:
+                      $ref: '#/components/schemas/SharedLink'
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+  delete:
+    operationId: deleteSharedLink
+    summary: Delete a shared link
+    description: |
+      Permanently delete a shared link. The link will immediately
+      stop working and cannot be recovered.
+    tags:
+      - Shared Links
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Shared link deleted
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+/accounts/{account_id}/shared-links/{id}/access-logs:
+  get:
+    operationId: getSharedLinkAccessLogs
+    summary: Get shared link access logs
+    description: |
+      Retrieve access logs for a shared link showing who viewed it,
+      when, and from where.
+    tags:
+      - Shared Links
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - $ref: '#/components/parameters/PageParam'
+      - $ref: '#/components/parameters/LimitParam'
+    responses:
+      '200':
+        description: Access logs
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    access_logs:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/SharedLinkAccessLog'
+                    pagination:
+                      $ref: '#/components/schemas/Pagination'
+            example:
+              success: true
+              data:
+                access_logs:
+                  - id: "log-uuid-1"
+                    shared_link_id: "link-uuid"
+                    ip_address: "192.168.x.x"
+                    user_agent: "Mozilla/5.0..."
+                    country: "US"
+                    accessed_at: "2024-01-20T15:30:00Z"
+                  - id: "log-uuid-2"
+                    shared_link_id: "link-uuid"
+                    ip_address: "10.0.x.x"
+                    user_agent: "Chrome/120..."
+                    country: "UK"
+                    accessed_at: "2024-01-19T10:15:00Z"
+                pagination:
+                  page: 1
+                  limit: 20
+                  total: 42
+                  total_pages: 3
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'

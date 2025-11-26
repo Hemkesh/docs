@@ -1,0 +1,130 @@
+---
+title: "Companies"
+description: "Understanding company records in Roulette"
+---
+
+# Companies
+
+Companies are the core entity in Roulette, representing potential investment opportunities in your deal flow pipeline.
+
+## Company Properties
+
+Each company record contains the following key properties:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | UUID | Unique identifier |
+| `account_id` | UUID | The team/account this company belongs to |
+| `name` | string | Company name |
+| `website` | string | Company website URL |
+| `description` | string | Brief description of the company |
+| `deck_link` | string | URL to external pitch deck |
+| `deck_storage_path` | string | Internal path to uploaded deck |
+| `notes` | string | Internal notes (not visible to company) |
+| `company_status_id` | UUID | Current pipeline stage |
+| `visibility` | enum | Access control level |
+| `source` | enum | How the company was added |
+| `metadata` | object | Custom fields and data |
+| `created_at` | timestamp | When the record was created |
+| `updated_at` | timestamp | When last modified |
+
+## Visibility Levels
+
+Companies can have different visibility settings to control who can access them:
+
+<CardGroup cols={3}>
+  <Card title="Private" icon="lock">
+    Only visible to the user who created it
+  </Card>
+  <Card title="Shared" icon="user-group">
+    Visible to specific users you choose
+  </Card>
+  <Card title="Team" icon="users">
+    Visible to all team members
+  </Card>
+</CardGroup>
+
+```javascript
+// Create a private company
+const company = await createCompany({
+  name: "Stealth Startup",
+  visibility: "private",
+  // ...
+});
+
+// Share with specific users
+await addCompanyShare(company.id, { user_id: "user-uuid" });
+```
+
+## Sources
+
+Track how companies enter your pipeline:
+
+| Source | Description |
+|--------|-------------|
+| `manual` | Manually added through the UI or API |
+| `email` | Imported from an email |
+| `form` | Submitted through an integrated form |
+| `referral` | Referred by another contact |
+| `website` | Applied through your website |
+| `event` | Met at an event or conference |
+| `other` | Other sources |
+
+## Pitch Decks
+
+Roulette supports two ways to attach pitch decks to companies:
+
+### External Links
+Link to decks hosted on DocSend, Google Drive, or other platforms:
+
+```json
+{
+  "deck_link": "https://docsend.com/view/abc123"
+}
+```
+
+### Direct Upload
+Upload PDFs directly to Roulette for secure storage and AI analysis:
+
+```bash
+curl -X POST "https://app.useroulette.com/api/v1/companies/upload" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -F "file=@pitch-deck.pdf" \
+  -F "company_data={\"name\":\"Acme Corp\",\"account_id\":\"...\"}"
+```
+
+<Tip>
+  Uploaded decks can be analyzed with AI to automatically extract company information, team details, and key metrics.
+</Tip>
+
+## Metadata
+
+Use the `metadata` field to store custom data specific to your workflow:
+
+```json
+{
+  "metadata": {
+    "industry": "SaaS",
+    "stage": "Series A",
+    "location": "San Francisco, CA",
+    "check_size": "$2M",
+    "lead_partner": "Jane Smith",
+    "priority": "high"
+  }
+}
+```
+
+<Note>
+  Metadata is stored as JSONB in the database, so you can store any valid JSON structure.
+</Note>
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card title="Pipeline Stages" icon="diagram-project" href="/concepts/pipeline">
+    Learn about managing deal flow statuses
+  </Card>
+  <Card title="Companies API" icon="code" href="/api-reference/companies/list">
+    View all company endpoints
+  </Card>
+</CardGroup>

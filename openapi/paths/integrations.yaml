@@ -1,0 +1,263 @@
+# Integrations API Endpoints
+
+/accounts/{account_id}/integrations:
+  get:
+    operationId: listIntegrations
+    summary: List integrations
+    description: |
+      Retrieve all configured integrations for an account.
+      Integration secrets/keys are never returned in responses.
+    tags:
+      - Integrations
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+    responses:
+      '200':
+        description: List of integrations
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationListResponse'
+            example:
+              success: true
+              data:
+                integrations:
+                  - id: "int-uuid-1"
+                    account_id: "account-uuid"
+                    integration_type: "tally"
+                    is_active: true
+                    has_auth: true
+                    last_sync_at: "2024-01-20T10:00:00Z"
+                    created_at: "2024-01-01T00:00:00Z"
+                  - id: "int-uuid-2"
+                    account_id: "account-uuid"
+                    integration_type: "specter"
+                    is_active: false
+                    has_auth: true
+                    last_sync_at: null
+                    created_at: "2024-01-05T00:00:00Z"
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+  post:
+    operationId: createIntegration
+    summary: Create or update an integration
+    description: |
+      Configure a new integration or update an existing one.
+      If an integration of the specified type already exists, it will be updated.
+
+      ## Tally Integration
+
+      Tally forms can send webhooks to Roulette when submissions are received.
+      Provide the signing secret from your Tally webhook settings.
+
+      Webhook URL: `https://app.useroulette.com/api/v1/accounts/{account_id}/form-submissions/tally`
+
+      ## Specter Integration
+
+      Connect to Specter for additional data enrichment.
+      Provide your Specter API key.
+    tags:
+      - Integrations
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IntegrationCreate'
+          examples:
+            tally:
+              summary: Configure Tally integration
+              value:
+                integration_type: "tally"
+                secret: "whsec_your_tally_signing_secret"
+            specter:
+              summary: Configure Specter integration
+              value:
+                integration_type: "specter"
+                api_key: "sk_your_specter_api_key"
+    responses:
+      '200':
+        description: Integration configured
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    integration:
+                      $ref: '#/components/schemas/Integration'
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+
+/accounts/{account_id}/integrations/{integration_id}:
+  get:
+    operationId: getIntegration
+    summary: Get integration details
+    description: |
+      Retrieve details about a specific integration.
+      Secrets/keys are never returned.
+    tags:
+      - Integrations
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: integration_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Integration details
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    integration:
+                      $ref: '#/components/schemas/Integration'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+  patch:
+    operationId: updateIntegration
+    summary: Update an integration
+    description: |
+      Update integration settings including credentials and active status.
+    tags:
+      - Integrations
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: integration_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IntegrationUpdate'
+    responses:
+      '200':
+        description: Integration updated
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    integration:
+                      $ref: '#/components/schemas/Integration'
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+  delete:
+    operationId: deleteIntegration
+    summary: Delete an integration
+    description: |
+      Remove an integration and its stored credentials.
+      This will stop any webhooks or data syncing from this integration.
+    tags:
+      - Integrations
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: integration_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Integration deleted
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+/accounts/{account_id}/integrations/{integration_id}/test:
+  post:
+    operationId: testIntegration
+    summary: Test integration connection
+    description: |
+      Test that the integration is properly configured and can connect
+      to the external service.
+    tags:
+      - Integrations
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: integration_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Connection test result
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    connected:
+                      type: boolean
+                      description: Whether the connection was successful
+                    message:
+                      type: string
+                      description: Status message or error details
+            example:
+              success: true
+              data:
+                connected: true
+                message: "Successfully connected to Specter API"
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'

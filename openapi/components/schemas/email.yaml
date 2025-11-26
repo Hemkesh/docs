@@ -1,0 +1,190 @@
+# Email Schema Definitions
+
+Email:
+  type: object
+  required:
+    - id
+    - account_id
+    - from_email
+    - subject
+    - created_at
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Unique identifier for the email
+    account_id:
+      type: string
+      format: uuid
+      description: Account this email belongs to
+    from_email:
+      type: string
+      format: email
+      description: Sender's email address
+      example: "founder@startup.com"
+    to_emails:
+      type: array
+      items:
+        type: string
+        format: email
+      description: Recipient email addresses
+    subject:
+      type: string
+      description: Email subject line
+      example: "Re: Investment Opportunity - TechStartup Inc"
+    content:
+      type: string
+      description: |
+        Email body content. Note: This field is excluded from list queries
+        for performance. Use the get single email endpoint for full content.
+    content_preview:
+      type: string
+      description: Truncated preview of the email content
+      maxLength: 200
+    company_ids:
+      type: array
+      items:
+        type: string
+        format: uuid
+      description: Linked company IDs
+    tags:
+      type: array
+      items:
+        type: string
+      description: Tags/labels applied to the email
+      example: ["follow-up", "warm-intro"]
+    processed:
+      type: boolean
+      description: Whether this email has been processed/reviewed
+      default: false
+    metadata:
+      type: object
+      additionalProperties: true
+      description: Additional metadata
+    attachments_count:
+      type: integer
+      description: Number of attachments
+      example: 2
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+EmailDetail:
+  allOf:
+    - $ref: '#/components/schemas/Email'
+    - type: object
+      properties:
+        content:
+          type: string
+          description: Full email body content
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmailAttachment'
+
+EmailAttachment:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    email_id:
+      type: string
+      format: uuid
+    filename:
+      type: string
+      example: "pitch_deck.pdf"
+    content_type:
+      type: string
+      example: "application/pdf"
+    size:
+      type: integer
+      description: File size in bytes
+    storage_path:
+      type: string
+    download_url:
+      type: string
+      format: uri
+      description: Signed download URL (when requested)
+    created_at:
+      type: string
+      format: date-time
+
+EmailCreate:
+  type: object
+  required:
+    - from_email
+    - subject
+    - content
+  properties:
+    from_email:
+      type: string
+      format: email
+    to_emails:
+      type: array
+      items:
+        type: string
+        format: email
+    subject:
+      type: string
+    content:
+      type: string
+    company_ids:
+      type: array
+      items:
+        type: string
+        format: uuid
+    tags:
+      type: array
+      items:
+        type: string
+    metadata:
+      type: object
+      additionalProperties: true
+
+EmailListResponse:
+  type: object
+  required:
+    - success
+    - data
+  properties:
+    success:
+      type: boolean
+    data:
+      type: object
+      properties:
+        emails:
+          type: array
+          items:
+            $ref: '#/components/schemas/Email'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+EmailTagsResponse:
+  type: object
+  properties:
+    success:
+      type: boolean
+    data:
+      type: object
+      properties:
+        tags:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              count:
+                type: integer
+                description: Number of emails with this tag
+          example:
+            - name: "follow-up"
+              count: 23
+            - name: "warm-intro"
+              count: 15
+            - name: "cold-outreach"
+              count: 8

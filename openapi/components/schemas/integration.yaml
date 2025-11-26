@@ -1,0 +1,90 @@
+# Integration Schema Definitions
+
+Integration:
+  type: object
+  required:
+    - id
+    - account_id
+    - integration_type
+    - is_active
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Unique identifier for the integration
+    account_id:
+      type: string
+      format: uuid
+      description: Account this integration belongs to
+    integration_type:
+      type: string
+      enum: [tally, specter]
+      description: Type of integration
+    is_active:
+      type: boolean
+      description: Whether the integration is currently active
+    has_auth:
+      type: boolean
+      description: Whether authentication credentials are configured
+    last_sync_at:
+      type: string
+      format: date-time
+      nullable: true
+      description: When data was last synced from this integration
+    metadata:
+      type: object
+      additionalProperties: true
+      description: Integration-specific metadata
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+IntegrationCreate:
+  type: object
+  required:
+    - integration_type
+  properties:
+    integration_type:
+      type: string
+      enum: [tally, specter]
+    secret:
+      type: string
+      description: |
+        For Tally: The webhook signing secret.
+        Required when integration_type is 'tally'.
+    api_key:
+      type: string
+      description: |
+        For Specter: The API key.
+        Required when integration_type is 'specter'.
+
+IntegrationUpdate:
+  type: object
+  properties:
+    is_active:
+      type: boolean
+    secret:
+      type: string
+      description: Update Tally signing secret
+    api_key:
+      type: string
+      description: Update Specter API key
+
+IntegrationListResponse:
+  type: object
+  required:
+    - success
+    - data
+  properties:
+    success:
+      type: boolean
+    data:
+      type: object
+      properties:
+        integrations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Integration'

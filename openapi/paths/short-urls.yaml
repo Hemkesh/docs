@@ -1,0 +1,164 @@
+# Short URLs API Endpoints
+
+/short-urls:
+  post:
+    operationId: createShortUrl
+    summary: Create a short URL
+    description: |
+      Create a shortened URL with optional password protection and expiration.
+      Useful for tracking link clicks and sharing protected content.
+    tags:
+      - Short URLs
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - original_url
+              - account_id
+            properties:
+              original_url:
+                type: string
+                format: uri
+                description: The URL to shorten
+                example: "https://example.com/very/long/path/to/resource"
+              account_id:
+                type: string
+                format: uuid
+                description: Account creating the short URL
+              password:
+                type: string
+                nullable: true
+                description: |
+                  Optional password protection:
+                  - Provide a password string for custom password
+                  - Use "auto-generate" to generate a random password
+                  - Omit or set to null for no password
+              expires_at:
+                type: string
+                format: date-time
+                nullable: true
+                description: Optional expiration date
+              metadata:
+                type: object
+                additionalProperties: true
+                description: Custom metadata to attach to the URL
+          examples:
+            simple:
+              summary: Simple short URL
+              value:
+                original_url: "https://example.com/document.pdf"
+                account_id: "account-uuid"
+            withPassword:
+              summary: Password protected
+              value:
+                original_url: "https://example.com/confidential.pdf"
+                account_id: "account-uuid"
+                password: "secure123"
+            autoPassword:
+              summary: Auto-generated password
+              value:
+                original_url: "https://example.com/private.pdf"
+                account_id: "account-uuid"
+                password: "auto-generate"
+            withExpiry:
+              summary: With expiration
+              value:
+                original_url: "https://example.com/temp-link"
+                account_id: "account-uuid"
+                expires_at: "2024-02-01T00:00:00Z"
+    responses:
+      '200':
+        description: Short URL created
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    short_code:
+                      type: string
+                      description: The unique short code
+                      example: "abc12xyz"
+                    short_url:
+                      type: string
+                      format: uri
+                      description: Full shortened URL
+                      example: "https://app.useroulette.com/r/abc12xyz"
+                    password:
+                      type: string
+                      nullable: true
+                      description: |
+                        The password for the URL (only returned when auto-generated).
+                        Store this - it won't be returned again.
+                    expires_at:
+                      type: string
+                      format: date-time
+                      nullable: true
+            example:
+              success: true
+              data:
+                short_code: "abc12xyz"
+                short_url: "https://app.useroulette.com/r/abc12xyz"
+                password: "auto-gen-pass123"
+                expires_at: null
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+
+/short-urls/resolve:
+  get:
+    operationId: resolveShortUrl
+    summary: Resolve a short URL
+    description: |
+      Resolve a short code to its original URL. If the URL is password
+      protected, the correct password must be provided.
+    tags:
+      - Short URLs
+    parameters:
+      - name: short_code
+        in: query
+        required: true
+        description: The short code to resolve
+        schema:
+          type: string
+      - name: password
+        in: query
+        required: false
+        description: Password (if the URL is protected)
+        schema:
+          type: string
+    responses:
+      '302':
+        description: Redirect to original URL
+        headers:
+          Location:
+            description: The original URL
+            schema:
+              type: string
+              format: uri
+      '400':
+        description: Invalid short code or missing password
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+      '401':
+        description: Incorrect password
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+      '404':
+        description: Short URL not found or expired
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'

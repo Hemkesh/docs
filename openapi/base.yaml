@@ -1,0 +1,150 @@
+openapi: 3.1.0
+info:
+  title: Roulette API
+  version: 1.0.0
+  description: |
+    The Roulette API provides programmatic access to manage your VC deal flow,
+    companies, contacts, and related data.
+
+    ## Authentication
+
+    All API requests require authentication using a Bearer token. Include your API key
+    in the `Authorization` header:
+
+    ```
+    Authorization: Bearer YOUR_API_KEY
+    ```
+
+    You can generate API keys from your account settings in the Roulette dashboard.
+
+    ## Rate Limiting
+
+    API requests are rate limited to ensure fair usage. Current limits:
+    - 1000 requests per minute per API key
+    - 100 requests per second per API key
+
+    Rate limit headers are included in all responses:
+    - `X-RateLimit-Limit`: Maximum requests per window
+    - `X-RateLimit-Remaining`: Requests remaining in current window
+    - `X-RateLimit-Reset`: Unix timestamp when the window resets
+
+    ## Pagination
+
+    List endpoints support pagination using the following query parameters:
+    - `page`: Page number (default: 1)
+    - `limit`: Items per page (default: 20, max: 100)
+
+    Paginated responses include pagination metadata:
+    ```json
+    {
+      "data": [...],
+      "pagination": {
+        "page": 1,
+        "limit": 20,
+        "total": 150,
+        "total_pages": 8,
+        "has_next": true,
+        "has_prev": false
+      }
+    }
+    ```
+
+    ## Errors
+
+    The API uses standard HTTP status codes and returns errors in a consistent format:
+
+    ```json
+    {
+      "success": false,
+      "error": "Human readable error message",
+      "data": null
+    }
+    ```
+
+    Common status codes:
+    - `400` Bad Request - Invalid parameters or request body
+    - `401` Unauthorized - Missing or invalid API key
+    - `403` Forbidden - Valid API key but insufficient permissions
+    - `404` Not Found - Resource not found
+    - `429` Too Many Requests - Rate limit exceeded
+    - `500` Internal Server Error - Server-side error
+
+  termsOfService: https://useroulette.com/terms
+  contact:
+    name: Roulette API Support
+    email: support@useroulette.com
+    url: https://useroulette.com/support
+  license:
+    name: Proprietary
+    url: https://useroulette.com/license
+
+servers:
+  - url: https://app.useroulette.com/api/v1
+    description: Production server
+  - url: http://localhost:3000/api/v1
+    description: Local development server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Companies
+    description: |
+      Manage companies in your deal flow pipeline. Companies represent potential
+      investment opportunities with associated pitch decks, contacts, and metadata.
+  - name: Company Statuses
+    description: |
+      Manage deal flow stages/statuses for organizing companies through your
+      investment pipeline (e.g., "Initial Review", "Due Diligence", "Closed").
+  - name: Company Settings
+    description: |
+      Configure custom fields and settings for company tracking.
+  - name: Contacts
+    description: |
+      Manage contacts associated with companies, including founders, executives,
+      and other key personnel.
+  - name: Form Submissions
+    description: |
+      Access form submissions from integrated platforms like Tally.
+  - name: Emails
+    description: |
+      Manage emails linked to companies and contacts.
+  - name: Meeting Minutes
+    description: |
+      Store and retrieve meeting notes and minutes related to companies.
+  - name: Shared Links
+    description: |
+      Create and manage secure shareable links for company portfolios.
+  - name: Integrations
+    description: |
+      Configure third-party integrations (Tally, Specter, etc.).
+  - name: Investor Dashboard
+    description: |
+      Configure and manage investor-facing portfolio dashboards.
+  - name: Dashboard
+    description: |
+      Access aggregated dashboard data and analytics.
+  - name: Team Members
+    description: |
+      View team members and their roles within your account.
+  - name: Short URLs
+    description: |
+      Create shortened URLs with optional password protection.
+
+paths: {}
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Key
+      description: |
+        API key authentication. Generate keys from your account settings.
+
+        Include in header: `Authorization: Bearer YOUR_API_KEY`
+
+  schemas: {}
+  parameters: {}
+  responses: {}
+  examples: {}

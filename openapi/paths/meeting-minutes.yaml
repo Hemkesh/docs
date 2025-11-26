@@ -1,0 +1,227 @@
+# Meeting Minutes API Endpoints
+
+/accounts/{account_id}/meeting-minutes:
+  get:
+    operationId: listMeetingMinutes
+    summary: List meeting minutes
+    description: |
+      Retrieve paginated meeting minutes/notes associated with your account.
+    tags:
+      - Meeting Minutes
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - $ref: '#/components/parameters/PageParam'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/SortOrderParam'
+      - $ref: '#/components/parameters/SearchParam'
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum: [created_at, updated_at, meeting_date]
+          default: created_at
+      - name: company_id
+        in: query
+        required: false
+        description: Filter by linked company
+        schema:
+          type: string
+          format: uuid
+      - name: processed
+        in: query
+        required: false
+        description: Filter by processed status
+        schema:
+          type: boolean
+    responses:
+      '200':
+        description: List of meeting minutes
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MeetingMinutesListResponse'
+            example:
+              success: true
+              data:
+                meeting_minutes:
+                  - id: "mm-uuid-1"
+                    account_id: "account-uuid"
+                    company_id: "company-uuid"
+                    title: "Initial Call - TechStartup Inc"
+                    meeting_date: "2024-01-15T14:00:00Z"
+                    attendees: ["John Doe", "Jane Smith"]
+                    processed: true
+                    created_at: "2024-01-15T15:30:00Z"
+                pagination:
+                  page: 1
+                  limit: 20
+                  total: 45
+                  total_pages: 3
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+  post:
+    operationId: createMeetingMinutes
+    summary: Create meeting minutes
+    description: |
+      Create a new meeting minutes record. Supports markdown formatting
+      in the content field.
+    tags:
+      - Meeting Minutes
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MeetingMinutesCreate'
+          example:
+            title: "Due Diligence Call - AI Platform"
+            content: |
+              ## Summary
+              Deep dive into technical architecture and team background.
+
+              ## Key Takeaways
+              - Strong technical team with ML expertise
+              - Clear product-market fit in enterprise segment
+              - Requesting $5M Series A
+
+              ## Next Steps
+              - Schedule follow-up with CTO
+              - Request customer references
+            company_id: "company-uuid"
+            meeting_date: "2024-01-20T10:00:00Z"
+            attendees: ["Partner A", "Associate B", "Founder CEO", "Founder CTO"]
+    responses:
+      '200':
+        description: Meeting minutes created
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    meeting_minutes:
+                      $ref: '#/components/schemas/MeetingMinutes'
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+
+/accounts/{account_id}/meeting-minutes/{meeting_minutes_id}:
+  get:
+    operationId: getMeetingMinutes
+    summary: Get meeting minutes details
+    description: Retrieve a specific meeting minutes record with full content.
+    tags:
+      - Meeting Minutes
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: meeting_minutes_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Meeting minutes details
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    meeting_minutes:
+                      $ref: '#/components/schemas/MeetingMinutes'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+  patch:
+    operationId: updateMeetingMinutes
+    summary: Update meeting minutes
+    description: Update meeting minutes content or metadata.
+    tags:
+      - Meeting Minutes
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: meeting_minutes_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MeetingMinutesUpdate'
+    responses:
+      '200':
+        description: Meeting minutes updated
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    meeting_minutes:
+                      $ref: '#/components/schemas/MeetingMinutes'
+      '400':
+        $ref: '#/components/responses/BadRequestError'
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'
+
+  delete:
+    operationId: deleteMeetingMinutes
+    summary: Delete meeting minutes
+    description: Permanently delete a meeting minutes record.
+    tags:
+      - Meeting Minutes
+    parameters:
+      - $ref: '#/components/parameters/AccountIdParam'
+      - name: meeting_minutes_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Meeting minutes deleted
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+      '401':
+        $ref: '#/components/responses/UnauthorizedError'
+      '404':
+        $ref: '#/components/responses/NotFoundError'

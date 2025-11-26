@@ -1,0 +1,5115 @@
+openapi: 3.1.0
+info:
+  title: Roulette API
+  version: 1.0.0
+  description: |
+    The Roulette API provides programmatic access to manage your VC deal flow,
+    companies, contacts, and related data.
+
+    ## Authentication
+
+    All API requests require authentication using a Bearer token. Include your API key
+    in the `Authorization` header:
+
+    ```
+    Authorization: Bearer YOUR_API_KEY
+    ```
+
+    You can generate API keys from your account settings in the Roulette dashboard.
+
+    ## Rate Limiting
+
+    API requests are rate limited to ensure fair usage. Current limits:
+    - 1000 requests per minute per API key
+    - 100 requests per second per API key
+
+    Rate limit headers are included in all responses:
+    - `X-RateLimit-Limit`: Maximum requests per window
+    - `X-RateLimit-Remaining`: Requests remaining in current window
+    - `X-RateLimit-Reset`: Unix timestamp when the window resets
+
+    ## Pagination
+
+    List endpoints support pagination using the following query parameters:
+    - `page`: Page number (default: 1)
+    - `limit`: Items per page (default: 20, max: 100)
+
+    Paginated responses include pagination metadata:
+    ```json
+    {
+      "data": [...],
+      "pagination": {
+        "page": 1,
+        "limit": 20,
+        "total": 150,
+        "total_pages": 8,
+        "has_next": true,
+        "has_prev": false
+      }
+    }
+    ```
+
+    ## Errors
+
+    The API uses standard HTTP status codes and returns errors in a consistent format:
+
+    ```json
+    {
+      "success": false,
+      "error": "Human readable error message",
+      "data": null
+    }
+    ```
+
+    Common status codes:
+    - `400` Bad Request - Invalid parameters or request body
+    - `401` Unauthorized - Missing or invalid API key
+    - `403` Forbidden - Valid API key but insufficient permissions
+    - `404` Not Found - Resource not found
+    - `429` Too Many Requests - Rate limit exceeded
+    - `500` Internal Server Error - Server-side error
+  termsOfService: https://useroulette.com/terms
+  contact:
+    name: Roulette API Support
+    email: support@useroulette.com
+    url: https://useroulette.com/support
+  license:
+    name: Proprietary
+    url: https://useroulette.com/license
+servers:
+  - url: https://app.useroulette.com/api/v1
+    description: Production server
+  - url: http://localhost:3000/api/v1
+    description: Local development server
+security:
+  - BearerAuth: []
+tags:
+  - name: Companies
+    description: |
+      Manage companies in your deal flow pipeline. Companies represent potential
+      investment opportunities with associated pitch decks, contacts, and metadata.
+  - name: Company Statuses
+    description: |
+      Manage deal flow stages/statuses for organizing companies through your
+      investment pipeline (e.g., "Initial Review", "Due Diligence", "Closed").
+  - name: Company Settings
+    description: |
+      Configure custom fields and settings for company tracking.
+  - name: Contacts
+    description: |
+      Manage contacts associated with companies, including founders, executives,
+      and other key personnel.
+  - name: Form Submissions
+    description: |
+      Access form submissions from integrated platforms like Tally.
+  - name: Emails
+    description: |
+      Manage emails linked to companies and contacts.
+  - name: Meeting Minutes
+    description: |
+      Store and retrieve meeting notes and minutes related to companies.
+  - name: Shared Links
+    description: |
+      Create and manage secure shareable links for company portfolios.
+  - name: Integrations
+    description: |
+      Configure third-party integrations (Tally, Specter, etc.).
+  - name: Investor Dashboard
+    description: |
+      Configure and manage investor-facing portfolio dashboards.
+  - name: Dashboard
+    description: |
+      Access aggregated dashboard data and analytics.
+  - name: Team Members
+    description: |
+      View team members and their roles within your account.
+  - name: Short URLs
+    description: |
+      Create shortened URLs with optional password protection.
+paths:
+  /companies:
+    get:
+      operationId: listCompanies
+      summary: List companies
+      description: |
+        Retrieve a paginated list of companies in your deal flow pipeline.
+        Supports filtering, sorting, and full-text search.
+      tags:
+        - Companies
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: '#/components/parameters/SearchParam'
+        - name: visibility
+          in: query
+          required: false
+          description: Filter by visibility level
+          schema:
+            type: string
+            enum:
+              - private
+              - shared
+              - team
+        - name: source
+          in: query
+          required: false
+          description: Filter by source
+          schema:
+            type: string
+            enum:
+              - manual
+              - email
+              - form
+              - referral
+              - website
+              - event
+              - other
+        - name: company_status_id
+          in: query
+          required: false
+          description: Filter by status ID. Use 'no_status' for companies without a status.
+          schema:
+            type: string
+        - name: include_pdf_url
+          in: query
+          required: false
+          description: Include signed download URLs for pitch deck PDFs
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyListResponse'
+              example:
+                success: true
+                data:
+                  companies:
+                    - id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+                      account_id: 550e8400-e29b-41d4-a716-446655440000
+                      name: Acme Corp
+                      website: https://acme.com
+                      description: AI-powered automation platform
+                      visibility: team
+                      source: email
+                      created_at: '2024-01-15T10:30:00Z'
+                      updated_at: '2024-01-20T14:45:00Z'
+                  pagination:
+                    page: 1
+                    limit: 20
+                    total: 45
+                    total_pages: 3
+                    has_next: true
+                    has_prev: false
+                authType: api_key
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      operationId: createCompany
+      summary: Create a company
+      description: |
+        Create a new company in your deal flow pipeline.
+      tags:
+        - Companies
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyCreate'
+            example:
+              account_id: 550e8400-e29b-41d4-a716-446655440000
+              name: TechStartup Inc
+              website: https://techstartup.io
+              description: Next-gen developer tools
+              visibility: team
+              source: referral
+              metadata:
+                industry: Developer Tools
+                stage: Seed
+      responses:
+        '200':
+          description: Company created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /companies/{id}:
+    get:
+      operationId: getCompany
+      summary: Get company details
+      description: Retrieve detailed information about a specific company.
+      tags:
+        - Companies
+      parameters:
+        - $ref: '#/components/parameters/CompanyIdParam'
+        - name: include_pdf_url
+          in: query
+          required: false
+          description: Include signed download URL for pitch deck PDF
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    patch:
+      operationId: updateCompany
+      summary: Update a company
+      description: |
+        Update company information. Only include fields you want to change.
+      tags:
+        - Companies
+      parameters:
+        - $ref: '#/components/parameters/CompanyIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyUpdate'
+            example:
+              name: Acme Corp (Updated)
+              company_status_id: status-uuid-here
+              metadata:
+                stage: Series A
+      responses:
+        '200':
+          description: Company updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      operationId: deleteCompany
+      summary: Delete a company
+      description: |
+        Permanently delete a company and all associated data including
+        attachments, notes, and shared access records.
+      tags:
+        - Companies
+      parameters:
+        - $ref: '#/components/parameters/CompanyIdParam'
+      responses:
+        '200':
+          description: Company deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Company deleted successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /companies/upload:
+    post:
+      operationId: uploadCompany
+      summary: Upload company with pitch deck
+      description: |
+        Create or update a company by uploading a pitch deck PDF or providing
+        a URL to an existing deck. The system will process and store the document.
+
+        **File Upload**: Use `multipart/form-data` with a `file` field.
+
+        **URL Upload**: Use `application/json` with a `url` field.
+      tags:
+        - Companies
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PDF file to upload
+                company_data:
+                  type: string
+                  description: JSON-encoded company data
+                company_id:
+                  type: string
+                  format: uuid
+                  description: Existing company ID to update (optional)
+          application/json:
+            schema:
+              type: object
+              required:
+                - url
+                - company_data
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: URL to fetch the deck from (DocSend, Google Drive, etc.)
+                email:
+                  type: string
+                  format: email
+                  description: Email for password-protected links
+                passcode:
+                  type: string
+                  description: Passcode for protected links
+                company_data:
+                  type: object
+                  description: Company data to create/update
+                company_id:
+                  type: string
+                  format: uuid
+                  description: Existing company ID to update
+      responses:
+        '200':
+          description: Company created/updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /companies/{id}/analyze:
+    post:
+      operationId: analyzeCompany
+      summary: Analyze pitch deck with AI
+      description: |
+        Use AI to analyze the company's pitch deck and extract structured data
+        including company information, team details, funding, and key insights.
+
+        **Note**: This operation consumes AI credits.
+      tags:
+        - Companies
+      parameters:
+        - $ref: '#/components/parameters/CompanyIdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                extraData:
+                  type: object
+                  description: Additional context to include in the analysis
+      responses:
+        '200':
+          description: Analysis completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyzeResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /companies/{id}/download:
+    get:
+      operationId: downloadCompanyPdf
+      summary: Get pitch deck download URL
+      description: |
+        Generate a signed download URL for the company's pitch deck PDF.
+        URLs are temporary and expire after the specified duration.
+      tags:
+        - Companies
+      parameters:
+        - $ref: '#/components/parameters/CompanyIdParam'
+        - name: expiry_minutes
+          in: query
+          required: false
+          description: URL expiry time in minutes (default varies by plan)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1440
+      responses:
+        '200':
+          description: Download URL generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      download_url:
+                        type: string
+                        format: uri
+                        description: Signed URL for downloading the PDF
+                      expires_at:
+                        type: string
+                        format: date-time
+                        description: When the URL expires
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /companies/bulk-actions:
+    post:
+      operationId: bulkCompanyActions
+      summary: Perform bulk actions on companies
+      description: |
+        Perform bulk operations on multiple companies at once.
+        Supported actions:
+        - `update_status`: Update the deal flow status
+        - `update_source`: Update the source
+        - `delete`: Delete multiple companies
+      tags:
+        - Companies
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkActionRequest'
+            examples:
+              updateStatus:
+                summary: Update status for multiple companies
+                value:
+                  company_ids:
+                    - uuid-1
+                    - uuid-2
+                  action: update_status
+                  company_status_id: status-uuid
+              deleteCompanies:
+                summary: Delete multiple companies
+                value:
+                  company_ids:
+                    - uuid-1
+                    - uuid-2
+                  action: delete
+      responses:
+        '200':
+          description: Bulk action completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkActionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /companies/duplicates:
+    get:
+      operationId: detectDuplicates
+      summary: Detect duplicate companies
+      description: |
+        Analyze your company database and identify potential duplicates
+        based on name similarity and other factors.
+      tags:
+        - Companies
+      parameters:
+        - name: threshold
+          in: query
+          required: false
+          description: Similarity threshold (0-1). Higher = stricter matching.
+          schema:
+            type: number
+            format: float
+            minimum: 0.5
+            maximum: 1
+            default: 0.8
+      responses:
+        '200':
+          description: Duplicates detected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DuplicatesResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      operationId: mergeDuplicates
+      summary: Merge duplicate companies
+      description: |
+        Merge multiple duplicate companies into one. The kept company will
+        inherit contacts, notes, and other associated data from merged companies.
+      tags:
+        - Companies
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MergeDuplicatesRequest'
+      responses:
+        '200':
+          description: Companies merged successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      kept_company:
+                        $ref: '#/components/schemas/Company'
+                      deleted_count:
+                        type: integer
+                      message:
+                        type: string
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /companies/{id}/shares:
+    get:
+      operationId: listCompanyShares
+      summary: List company shares
+      description: |
+        Get the list of users who have access to a shared company.
+        Only applicable for companies with `visibility: shared`.
+      tags:
+        - Companies
+      parameters:
+        - $ref: '#/components/parameters/CompanyIdParam'
+      responses:
+        '200':
+          description: List of shares
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      shares:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CompanySharedAccess'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    post:
+      operationId: addCompanyShare
+      summary: Share company with user
+      description: |
+        Grant a user access to a company. The company must have
+        `visibility: shared` for this to work.
+      tags:
+        - Companies
+      parameters:
+        - $ref: '#/components/parameters/CompanyIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+              properties:
+                user_id:
+                  type: string
+                  format: uuid
+                  description: User ID to share with
+      responses:
+        '200':
+          description: Share added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      share:
+                        $ref: '#/components/schemas/CompanySharedAccess'
+                      message:
+                        type: string
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    delete:
+      operationId: removeCompanyShare
+      summary: Remove company share
+      description: Revoke a user's access to a shared company.
+      tags:
+        - Companies
+      parameters:
+        - $ref: '#/components/parameters/CompanyIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+              properties:
+                user_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Share removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /companies/{id}/attachments:
+    post:
+      operationId: uploadCompanyAttachment
+      summary: Upload company attachment
+      description: |
+        Upload additional documents/attachments to a company
+        (financials, legal docs, etc.).
+      tags:
+        - Companies
+      parameters:
+        - $ref: '#/components/parameters/CompanyIdParam'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - title
+                - account_id
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File to upload
+                title:
+                  type: string
+                  description: Attachment title
+                description:
+                  type: string
+                  description: Optional description
+                account_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Attachment uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      attachment:
+                        $ref: '#/components/schemas/CompanyAttachment'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /companies/{id}/enrich:
+    post:
+      operationId: enrichCompany
+      summary: Enrich company data
+      description: |
+        Use external data sources to enrich company information
+        (firmographics, funding history, news, etc.).
+
+        **Note**: This operation may consume enrichment credits.
+      tags:
+        - Companies
+      parameters:
+        - $ref: '#/components/parameters/CompanyIdParam'
+      responses:
+        '200':
+          description: Enrichment completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      company:
+                        $ref: '#/components/schemas/Company'
+                      enrichment_data:
+                        type: object
+                        description: Additional data from enrichment
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /accounts/{account_id}/company-statuses:
+    get:
+      operationId: listCompanyStatuses
+      summary: List company statuses
+      description: |
+        Retrieve all deal flow statuses/stages for an account.
+        Results are ordered by rank (pipeline order), then by creation date.
+      tags:
+        - Company Statuses
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      responses:
+        '200':
+          description: List of company statuses
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyStatusListResponse'
+              example:
+                success: true
+                data:
+                  - id: uuid-1
+                    account_id: account-uuid
+                    name: Initial Review
+                    color: '#6B7280'
+                    rank: 1
+                    is_default: true
+                    created_at: '2024-01-01T00:00:00Z'
+                  - id: uuid-2
+                    account_id: account-uuid
+                    name: Due Diligence
+                    color: '#3B82F6'
+                    rank: 2
+                    is_default: false
+                    created_at: '2024-01-01T00:00:00Z'
+                  - id: uuid-3
+                    account_id: account-uuid
+                    name: Partner Meeting
+                    color: '#8B5CF6'
+                    rank: 3
+                    is_default: false
+                    created_at: '2024-01-01T00:00:00Z'
+                  - id: uuid-4
+                    account_id: account-uuid
+                    name: Term Sheet
+                    color: '#10B981'
+                    rank: 4
+                    is_default: false
+                    created_at: '2024-01-01T00:00:00Z'
+                  - id: uuid-5
+                    account_id: account-uuid
+                    name: Passed
+                    color: '#EF4444'
+                    rank: 5
+                    is_default: false
+                    created_at: '2024-01-01T00:00:00Z'
+                authType: api_key
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    post:
+      operationId: createCompanyStatus
+      summary: Create a company status
+      description: |
+        Create a new deal flow status/stage. If rank is not provided,
+        the status is added at the end of the pipeline.
+      tags:
+        - Company Statuses
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyStatusCreate'
+            example:
+              name: IC Review
+              color: '#F59E0B'
+              description: Awaiting Investment Committee review
+      responses:
+        '200':
+          description: Status created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/CompanyStatus'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /accounts/{account_id}/company-statuses/{status_id}:
+    patch:
+      operationId: updateCompanyStatus
+      summary: Update a company status
+      description: Update the name, color, rank, or other properties of a status.
+      tags:
+        - Company Statuses
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: status_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyStatusUpdate'
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/CompanyStatus'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    delete:
+      operationId: deleteCompanyStatus
+      summary: Delete a company status
+      description: |
+        Delete a deal flow status. Companies with this status will have
+        their status set to null.
+      tags:
+        - Company Statuses
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: status_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Status deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /accounts/{account_id}/company-status-counts:
+    get:
+      operationId: getCompanyStatusCounts
+      summary: Get company counts by status
+      description: |
+        Retrieve pre-computed counts of companies grouped by their deal flow status.
+        Useful for dashboard displays and pipeline visualization.
+      tags:
+        - Company Statuses
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      responses:
+        '200':
+          description: Status counts retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyStatusCountsResponse'
+              example:
+                success: true
+                data:
+                  total: 150
+                  no_status: 12
+                  statuses:
+                    - status_id: uuid-1
+                      status_name: Initial Review
+                      count: 45
+                    - status_id: uuid-2
+                      status_name: Due Diligence
+                      count: 23
+                    - status_id: uuid-3
+                      status_name: Partner Meeting
+                      count: 15
+                    - status_id: uuid-4
+                      status_name: Term Sheet
+                      count: 8
+                    - status_id: uuid-5
+                      status_name: Passed
+                      count: 47
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /accounts/{account_id}/company-settings:
+    get:
+      operationId: getCompanySettings
+      summary: Get company field settings
+      description: |
+        Retrieve custom field configurations for companies in this account.
+        These define additional metadata fields that can be tracked.
+      tags:
+        - Company Settings
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      responses:
+        '200':
+          description: Company settings retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      fields:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            name:
+                              type: string
+                            field_type:
+                              type: string
+                              enum:
+                                - text
+                                - number
+                                - boolean
+                                - select
+                                - date
+                                - url
+                            options:
+                              type: array
+                              items:
+                                type: string
+                              description: For select fields, the available options
+                            required:
+                              type: boolean
+                            order:
+                              type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /accounts/{account_id}/dashboard:
+    get:
+      operationId: getDashboard
+      summary: Get dashboard data
+      description: |
+        Retrieve aggregated dashboard data including statistics,
+        pipeline summary, recent activity, and charts.
+
+        This endpoint is optimized for performance and returns
+        pre-computed metrics where possible.
+      tags:
+        - Dashboard
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: activity_limit
+          in: query
+          required: false
+          description: Maximum number of recent activity items to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+        - name: chart_days
+          in: query
+          required: false
+          description: Number of days to include in chart data
+          schema:
+            type: integer
+            minimum: 7
+            maximum: 365
+            default: 30
+      responses:
+        '200':
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardResponse'
+              example:
+                success: true
+                data:
+                  stats:
+                    total_companies: 150
+                    companies_this_month: 12
+                    active_deals: 45
+                    meetings_this_week: 8
+                  pipeline_summary:
+                    - status_id: uuid-1
+                      status_name: Initial Review
+                      color: '#6B7280'
+                      count: 45
+                    - status_id: uuid-2
+                      status_name: Due Diligence
+                      color: '#3B82F6'
+                      count: 23
+                    - status_id: uuid-3
+                      status_name: Partner Meeting
+                      color: '#8B5CF6'
+                      count: 15
+                  recent_activity:
+                    - id: activity-1
+                      type: company_added
+                      description: TechStartup Inc was added to pipeline
+                      company_id: company-uuid
+                      company_name: TechStartup Inc
+                      created_at: '2024-01-20T14:30:00Z'
+                    - id: activity-2
+                      type: status_changed
+                      description: AI Platform moved to Due Diligence
+                      company_id: company-uuid-2
+                      company_name: AI Platform
+                      created_at: '2024-01-20T10:15:00Z'
+                  charts:
+                    companies_over_time:
+                      - date: '2024-01-20'
+                        count: 3
+                      - date: '2024-01-19'
+                        count: 5
+                      - date: '2024-01-18'
+                        count: 2
+                    source_breakdown:
+                      - source: email
+                        count: 45
+                      - source: referral
+                        count: 38
+                      - source: form
+                        count: 25
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /accounts/{account_id}/members:
+    get:
+      operationId: listMembers
+      summary: List team members
+      description: |
+        Retrieve all members and pending invitations for the account/team.
+      tags:
+        - Team Members
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      responses:
+        '200':
+          description: Team members and invitations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MembersResponse'
+              example:
+                success: true
+                data:
+                  members:
+                    - id: membership-uuid-1
+                      user_id: user-uuid-1
+                      account_id: account-uuid
+                      role: owner
+                      name: John Doe
+                      email: john@example.com
+                      picture_url: https://example.com/avatars/john.jpg
+                      created_at: '2023-06-01T00:00:00Z'
+                    - id: membership-uuid-2
+                      user_id: user-uuid-2
+                      account_id: account-uuid
+                      role: admin
+                      name: Jane Smith
+                      email: jane@example.com
+                      picture_url: null
+                      created_at: '2023-08-15T00:00:00Z'
+                  invitations:
+                    - id: invite-uuid-1
+                      account_id: account-uuid
+                      email: newmember@example.com
+                      role: member
+                      invited_by: user-uuid-1
+                      expires_at: '2024-02-01T00:00:00Z'
+                      created_at: '2024-01-15T00:00:00Z'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /accounts/{account_id}/bulk-upload:
+    post:
+      operationId: bulkUpload
+      summary: Bulk upload companies
+      description: |
+        Import multiple companies at once from a CSV file or JSON array.
+        Supports mapping columns/fields to company properties.
+      tags:
+        - Companies
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: CSV file with company data
+                mapping:
+                  type: string
+                  description: |
+                    JSON string mapping CSV columns to company fields.
+                    Example: {"Company Name": "name", "Website": "website"}
+                default_status_id:
+                  type: string
+                  format: uuid
+                  description: Default status for imported companies
+          application/json:
+            schema:
+              type: object
+              properties:
+                companies:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CompanyCreate'
+                  maxItems: 500
+                default_status_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Bulk upload results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      imported_count:
+                        type: integer
+                        description: Number of companies successfully imported
+                      failed_count:
+                        type: integer
+                        description: Number of companies that failed to import
+                      errors:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            row:
+                              type: integer
+                            error:
+                              type: string
+                        description: Details about failed imports
+              example:
+                success: true
+                data:
+                  imported_count: 48
+                  failed_count: 2
+                  errors:
+                    - row: 15
+                      error: Invalid website URL format
+                    - row: 32
+                      error: Duplicate company name
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /accounts/{account_id}/ai-credits/checkout:
+    post:
+      operationId: createAiCreditsCheckout
+      summary: Purchase AI credits
+      description: |
+        Create a checkout session to purchase additional AI credits
+        for features like pitch deck analysis and email processing.
+      tags:
+        - Dashboard
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - credits_package
+              properties:
+                credits_package:
+                  type: string
+                  enum:
+                    - starter
+                    - professional
+                    - enterprise
+                  description: |
+                    Credit package to purchase:
+                    - `starter`: 100 credits
+                    - `professional`: 500 credits
+                    - `enterprise`: 2000 credits
+                success_url:
+                  type: string
+                  format: uri
+                  description: URL to redirect after successful payment
+                cancel_url:
+                  type: string
+                  format: uri
+                  description: URL to redirect if payment is cancelled
+      responses:
+        '200':
+          description: Checkout session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      checkout_url:
+                        type: string
+                        format: uri
+                        description: URL to redirect user to for payment
+                      session_id:
+                        type: string
+                        description: Stripe checkout session ID
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /accounts/{account_id}/emails:
+    get:
+      operationId: listEmails
+      summary: List emails
+      description: |
+        Retrieve paginated emails associated with your account.
+        Email content is excluded from list queries for performance;
+        use the single email endpoint to get full content.
+      tags:
+        - Emails
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: '#/components/parameters/SearchParam'
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum:
+              - created_at
+              - updated_at
+            default: created_at
+        - name: from_email
+          in: query
+          required: false
+          description: Filter by sender email address
+          schema:
+            type: string
+            format: email
+        - name: company_id
+          in: query
+          required: false
+          description: Filter emails linked to a specific company
+          schema:
+            type: string
+            format: uuid
+        - name: processed
+          in: query
+          required: false
+          description: Filter by processed status
+          schema:
+            type: boolean
+        - name: tag
+          in: query
+          required: false
+          description: Filter by tag
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of emails
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailListResponse'
+              example:
+                success: true
+                data:
+                  emails:
+                    - id: email-uuid-1
+                      account_id: account-uuid
+                      from_email: founder@startup.com
+                      subject: Investment Opportunity - AI Platform
+                      content_preview: Hi, I wanted to reach out about our Series A...
+                      tags:
+                        - warm-intro
+                      processed: false
+                      attachments_count: 1
+                      created_at: '2024-01-15T10:30:00Z'
+                  pagination:
+                    page: 1
+                    limit: 20
+                    total: 150
+                    total_pages: 8
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    post:
+      operationId: createEmail
+      summary: Create an email record
+      description: |
+        Manually create an email record. Useful for importing emails
+        from external sources or syncing from email integrations.
+      tags:
+        - Emails
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailCreate'
+            example:
+              from_email: founder@newstartup.com
+              subject: Introduction - NewStartup seeking Series A
+              content: |-
+                Hi,
+
+                I'm the founder of NewStartup, and I wanted to reach out...
+              company_ids:
+                - company-uuid-1
+              tags:
+                - inbound
+                - series-a
+      responses:
+        '200':
+          description: Email created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      email:
+                        $ref: '#/components/schemas/Email'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /accounts/{account_id}/emails/{email_id}:
+    get:
+      operationId: getEmail
+      summary: Get email details
+      description: |
+        Retrieve a specific email with full content and attachments.
+      tags:
+        - Emails
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: email_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Email details with full content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      email:
+                        $ref: '#/components/schemas/EmailDetail'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    patch:
+      operationId: updateEmail
+      summary: Update an email
+      description: |
+        Update email properties like tags, processed status, or linked companies.
+      tags:
+        - Emails
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: email_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                company_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                tags:
+                  type: array
+                  items:
+                    type: string
+                processed:
+                  type: boolean
+                metadata:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Email updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      email:
+                        $ref: '#/components/schemas/Email'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    delete:
+      operationId: deleteEmail
+      summary: Delete an email
+      description: Permanently delete an email and its attachments.
+      tags:
+        - Emails
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: email_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Email deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /accounts/{account_id}/emails/{email_id}/attachments:
+    get:
+      operationId: listEmailAttachments
+      summary: List email attachments
+      description: Get all attachments for an email with download URLs.
+      tags:
+        - Emails
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: email_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of attachments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      attachments:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/EmailAttachment'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /accounts/{account_id}/emails/tags:
+    get:
+      operationId: listEmailTags
+      summary: List available email tags
+      description: |
+        Get all tags used in emails for this account, with usage counts.
+      tags:
+        - Emails
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      responses:
+        '200':
+          description: List of tags
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailTagsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /emails/{email_id}/analyze:
+    post:
+      operationId: analyzeEmail
+      summary: Analyze email with AI
+      description: |
+        Use AI to analyze email content and extract structured information
+        such as company details, contact info, and intent classification.
+
+        **Note**: This operation consumes AI credits.
+      tags:
+        - Emails
+      parameters:
+        - name: email_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Analysis completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      intent:
+                        type: string
+                        enum:
+                          - pitch
+                          - intro_request
+                          - follow_up
+                          - meeting_request
+                          - other
+                      company_info:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          website:
+                            type: string
+                          description:
+                            type: string
+                      contact_info:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          email:
+                            type: string
+                          role:
+                            type: string
+                      suggested_actions:
+                        type: array
+                        items:
+                          type: string
+                      confidence:
+                        type: number
+                        format: float
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /emails/{email_id}/companies:
+    post:
+      operationId: linkEmailToCompanies
+      summary: Link email to companies
+      description: Associate an email with one or more companies.
+      tags:
+        - Emails
+      parameters:
+        - name: email_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - company_ids
+              properties:
+                company_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  minItems: 1
+      responses:
+        '200':
+          description: Email linked to companies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      email:
+                        $ref: '#/components/schemas/Email'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /accounts/{account_id}/form-submissions:
+    get:
+      operationId: listFormSubmissions
+      summary: List form submissions
+      description: |
+        Retrieve paginated form submissions from integrated platforms
+        (Tally, Specter, etc.) or manually created submissions.
+      tags:
+        - Form Submissions
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortOrderParam'
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum:
+              - created_at
+              - updated_at
+            default: created_at
+        - name: company_id
+          in: query
+          required: false
+          description: Filter submissions linked to a specific company
+          schema:
+            type: string
+            format: uuid
+        - name: processed
+          in: query
+          required: false
+          description: Filter by processed status
+          schema:
+            type: boolean
+        - name: integration_type
+          in: query
+          required: false
+          description: Filter by source integration
+          schema:
+            type: string
+            enum:
+              - tally
+              - specter
+              - manual
+      responses:
+        '200':
+          description: List of form submissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormSubmissionListResponse'
+              example:
+                success: true
+                data:
+                  submissions:
+                    - id: sub-uuid-1
+                      account_id: account-uuid
+                      integration_type: tally
+                      data:
+                        - key: company_name
+                          label: Company Name
+                          type: INPUT_TEXT
+                          value: TechStartup Inc
+                        - key: email
+                          label: Email
+                          type: INPUT_EMAIL
+                          value: founder@techstartup.com
+                      processed: false
+                      created_at: '2024-01-15T10:30:00Z'
+                  pagination:
+                    page: 1
+                    limit: 10
+                    total: 25
+                    total_pages: 3
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    post:
+      operationId: createFormSubmission
+      summary: Create a form submission
+      description: |
+        Manually create a form submission record. Useful for importing
+        data from external sources or creating test data.
+      tags:
+        - Form Submissions
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormSubmissionCreate'
+            example:
+              data:
+                - key: company_name
+                  label: Company Name
+                  type: INPUT_TEXT
+                  value: New Venture Co
+                - key: website
+                  label: Website
+                  type: INPUT_LINK
+                  value: https://newventure.co
+                - key: pitch_deck
+                  label: Pitch Deck
+                  type: FILE_UPLOAD
+                  value:
+                    - id: file-1
+                      name: pitch.pdf
+                      url: https://storage.example.com/pitch.pdf
+                      size: 2048000
+      responses:
+        '200':
+          description: Submission created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      submission:
+                        $ref: '#/components/schemas/FormSubmission'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /accounts/{account_id}/form-submissions/{submission_id}:
+    get:
+      operationId: getFormSubmission
+      summary: Get form submission details
+      description: Retrieve a specific form submission with all field data.
+      tags:
+        - Form Submissions
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: submission_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Submission details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      submission:
+                        $ref: '#/components/schemas/FormSubmission'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    patch:
+      operationId: updateFormSubmission
+      summary: Update a form submission
+      description: |
+        Update a form submission. Commonly used to mark as processed
+        or link to a company.
+      tags:
+        - Form Submissions
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: submission_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                company_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                processed:
+                  type: boolean
+                metadata:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Submission updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      submission:
+                        $ref: '#/components/schemas/FormSubmission'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    delete:
+      operationId: deleteFormSubmission
+      summary: Delete a form submission
+      description: Permanently delete a form submission.
+      tags:
+        - Form Submissions
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: submission_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Submission deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /accounts/{account_id}/form-submissions/{submission_id}/convert:
+    post:
+      operationId: convertFormSubmissionToCompany
+      summary: Convert submission to company
+      description: |
+        Create a new company from a form submission, automatically
+        mapping form fields to company properties.
+      tags:
+        - Form Submissions
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: submission_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                field_mapping:
+                  type: object
+                  description: Custom field mapping (form field key -> company field)
+                  additionalProperties:
+                    type: string
+                company_status_id:
+                  type: string
+                  format: uuid
+                  description: Initial status for the new company
+      responses:
+        '200':
+          description: Company created from submission
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      company:
+                        $ref: '#/components/schemas/Company'
+                      submission:
+                        $ref: '#/components/schemas/FormSubmission'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /accounts/{account_id}/integrations:
+    get:
+      operationId: listIntegrations
+      summary: List integrations
+      description: |
+        Retrieve all configured integrations for an account.
+        Integration secrets/keys are never returned in responses.
+      tags:
+        - Integrations
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      responses:
+        '200':
+          description: List of integrations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationListResponse'
+              example:
+                success: true
+                data:
+                  integrations:
+                    - id: int-uuid-1
+                      account_id: account-uuid
+                      integration_type: tally
+                      is_active: true
+                      has_auth: true
+                      last_sync_at: '2024-01-20T10:00:00Z'
+                      created_at: '2024-01-01T00:00:00Z'
+                    - id: int-uuid-2
+                      account_id: account-uuid
+                      integration_type: specter
+                      is_active: false
+                      has_auth: true
+                      last_sync_at: null
+                      created_at: '2024-01-05T00:00:00Z'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    post:
+      operationId: createIntegration
+      summary: Create or update an integration
+      description: |
+        Configure a new integration or update an existing one.
+        If an integration of the specified type already exists, it will be updated.
+
+        ## Tally Integration
+
+        Tally forms can send webhooks to Roulette when submissions are received.
+        Provide the signing secret from your Tally webhook settings.
+
+        Webhook URL: `https://app.useroulette.com/api/v1/accounts/{account_id}/form-submissions/tally`
+
+        ## Specter Integration
+
+        Connect to Specter for additional data enrichment.
+        Provide your Specter API key.
+      tags:
+        - Integrations
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationCreate'
+            examples:
+              tally:
+                summary: Configure Tally integration
+                value:
+                  integration_type: tally
+                  secret: whsec_your_tally_signing_secret
+              specter:
+                summary: Configure Specter integration
+                value:
+                  integration_type: specter
+                  api_key: sk_your_specter_api_key
+      responses:
+        '200':
+          description: Integration configured
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      integration:
+                        $ref: '#/components/schemas/Integration'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /accounts/{account_id}/integrations/{integration_id}:
+    get:
+      operationId: getIntegration
+      summary: Get integration details
+      description: |
+        Retrieve details about a specific integration.
+        Secrets/keys are never returned.
+      tags:
+        - Integrations
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: integration_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Integration details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      integration:
+                        $ref: '#/components/schemas/Integration'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    patch:
+      operationId: updateIntegration
+      summary: Update an integration
+      description: |
+        Update integration settings including credentials and active status.
+      tags:
+        - Integrations
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: integration_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationUpdate'
+      responses:
+        '200':
+          description: Integration updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      integration:
+                        $ref: '#/components/schemas/Integration'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    delete:
+      operationId: deleteIntegration
+      summary: Delete an integration
+      description: |
+        Remove an integration and its stored credentials.
+        This will stop any webhooks or data syncing from this integration.
+      tags:
+        - Integrations
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: integration_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Integration deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /accounts/{account_id}/integrations/{integration_id}/test:
+    post:
+      operationId: testIntegration
+      summary: Test integration connection
+      description: |
+        Test that the integration is properly configured and can connect
+        to the external service.
+      tags:
+        - Integrations
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: integration_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Connection test result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      connected:
+                        type: boolean
+                        description: Whether the connection was successful
+                      message:
+                        type: string
+                        description: Status message or error details
+              example:
+                success: true
+                data:
+                  connected: true
+                  message: Successfully connected to Specter API
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /accounts/{account_id}/investor-dashboard:
+    get:
+      operationId: getInvestorDashboard
+      summary: Get investor dashboard
+      description: |
+        Retrieve the investor dashboard configuration for an account.
+        The investor dashboard is a public-facing page that can be shared
+        with LPs to show portfolio performance and updates.
+      tags:
+        - Investor Dashboard
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      responses:
+        '200':
+          description: Investor dashboard details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      dashboard:
+                        $ref: '#/components/schemas/InvestorDashboard'
+              example:
+                success: true
+                data:
+                  dashboard:
+                    id: dash-uuid
+                    account_id: account-uuid
+                    is_active: true
+                    password_protected: true
+                    short_code: inv-abc123
+                    dashboard_url: https://app.useroulette.com/investor/inv-abc123
+                    shared_permissions:
+                      - view_portfolio
+                      - view_metrics
+                    access_count: 156
+                    last_accessed_at: '2024-01-20T14:30:00Z'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: No investor dashboard configured
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      dashboard:
+                        type: 'null'
+    post:
+      operationId: createInvestorDashboard
+      summary: Create investor dashboard
+      description: |
+        Create an investor dashboard for the account. Only one dashboard
+        can exist per account.
+      tags:
+        - Investor Dashboard
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvestorDashboardCreate'
+            example:
+              password: lp-access-2024
+              shared_permissions:
+                - view_portfolio
+                - view_metrics
+                - view_updates
+              is_active: true
+      responses:
+        '200':
+          description: Dashboard created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      dashboard:
+                        $ref: '#/components/schemas/InvestorDashboard'
+        '400':
+          description: Dashboard already exists or invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    patch:
+      operationId: updateInvestorDashboard
+      summary: Update investor dashboard
+      description: |
+        Update investor dashboard settings including password,
+        permissions, and active status.
+      tags:
+        - Investor Dashboard
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvestorDashboardUpdate'
+            examples:
+              deactivate:
+                summary: Deactivate dashboard
+                value:
+                  is_active: false
+              updatePermissions:
+                summary: Update shared permissions
+                value:
+                  shared_permissions:
+                    - view_portfolio
+                    - view_metrics
+                    - download_reports
+              removePassword:
+                summary: Remove password protection
+                value:
+                  password: null
+      responses:
+        '200':
+          description: Dashboard updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      dashboard:
+                        $ref: '#/components/schemas/InvestorDashboard'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    delete:
+      operationId: deleteInvestorDashboard
+      summary: Delete investor dashboard
+      description: |
+        Delete the investor dashboard. The dashboard URL will immediately
+        stop working.
+      tags:
+        - Investor Dashboard
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      responses:
+        '200':
+          description: Dashboard deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /accounts/{account_id}/investor-dashboard/access-logs:
+    get:
+      operationId: getInvestorDashboardAccessLogs
+      summary: Get dashboard access logs
+      description: |
+        Retrieve access logs showing who viewed the investor dashboard,
+        when, and from where.
+      tags:
+        - Investor Dashboard
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Access logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      access_logs:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/InvestorDashboardAccessLog'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /accounts/{account_id}/meeting-minutes:
+    get:
+      operationId: listMeetingMinutes
+      summary: List meeting minutes
+      description: |
+        Retrieve paginated meeting minutes/notes associated with your account.
+      tags:
+        - Meeting Minutes
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: '#/components/parameters/SearchParam'
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum:
+              - created_at
+              - updated_at
+              - meeting_date
+            default: created_at
+        - name: company_id
+          in: query
+          required: false
+          description: Filter by linked company
+          schema:
+            type: string
+            format: uuid
+        - name: processed
+          in: query
+          required: false
+          description: Filter by processed status
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of meeting minutes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeetingMinutesListResponse'
+              example:
+                success: true
+                data:
+                  meeting_minutes:
+                    - id: mm-uuid-1
+                      account_id: account-uuid
+                      company_id: company-uuid
+                      title: Initial Call - TechStartup Inc
+                      meeting_date: '2024-01-15T14:00:00Z'
+                      attendees:
+                        - John Doe
+                        - Jane Smith
+                      processed: true
+                      created_at: '2024-01-15T15:30:00Z'
+                  pagination:
+                    page: 1
+                    limit: 20
+                    total: 45
+                    total_pages: 3
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    post:
+      operationId: createMeetingMinutes
+      summary: Create meeting minutes
+      description: |
+        Create a new meeting minutes record. Supports markdown formatting
+        in the content field.
+      tags:
+        - Meeting Minutes
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MeetingMinutesCreate'
+            example:
+              title: Due Diligence Call - AI Platform
+              content: |
+                ## Summary
+                Deep dive into technical architecture and team background.
+
+                ## Key Takeaways
+                - Strong technical team with ML expertise
+                - Clear product-market fit in enterprise segment
+                - Requesting $5M Series A
+
+                ## Next Steps
+                - Schedule follow-up with CTO
+                - Request customer references
+              company_id: company-uuid
+              meeting_date: '2024-01-20T10:00:00Z'
+              attendees:
+                - Partner A
+                - Associate B
+                - Founder CEO
+                - Founder CTO
+      responses:
+        '200':
+          description: Meeting minutes created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      meeting_minutes:
+                        $ref: '#/components/schemas/MeetingMinutes'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /accounts/{account_id}/meeting-minutes/{meeting_minutes_id}:
+    get:
+      operationId: getMeetingMinutes
+      summary: Get meeting minutes details
+      description: Retrieve a specific meeting minutes record with full content.
+      tags:
+        - Meeting Minutes
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: meeting_minutes_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Meeting minutes details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      meeting_minutes:
+                        $ref: '#/components/schemas/MeetingMinutes'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    patch:
+      operationId: updateMeetingMinutes
+      summary: Update meeting minutes
+      description: Update meeting minutes content or metadata.
+      tags:
+        - Meeting Minutes
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: meeting_minutes_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MeetingMinutesUpdate'
+      responses:
+        '200':
+          description: Meeting minutes updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      meeting_minutes:
+                        $ref: '#/components/schemas/MeetingMinutes'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    delete:
+      operationId: deleteMeetingMinutes
+      summary: Delete meeting minutes
+      description: Permanently delete a meeting minutes record.
+      tags:
+        - Meeting Minutes
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: meeting_minutes_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Meeting minutes deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /accounts/{account_id}/shared-links:
+    get:
+      operationId: listSharedLinks
+      summary: List shared links
+      description: |
+        Retrieve all shared links for an account. Shared links allow you to
+        share company portfolios with external parties (LPs, co-investors, etc.)
+        with granular access control.
+      tags:
+        - Shared Links
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SortOrderParam'
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum:
+              - created_at
+              - updated_at
+              - name
+            default: created_at
+        - name: is_active
+          in: query
+          required: false
+          description: Filter by active status
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of shared links
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedLinkListResponse'
+              example:
+                success: true
+                data:
+                  links:
+                    - id: link-uuid-1
+                      account_id: account-uuid
+                      name: Q1 2024 Portfolio
+                      short_code: abc123xy
+                      short_url: https://app.useroulette.com/s/abc123xy
+                      password_protected: true
+                      is_active: true
+                      view_count: 42
+                      created_at: '2024-01-01T00:00:00Z'
+                  pagination:
+                    page: 1
+                    limit: 20
+                    total: 5
+                    total_pages: 1
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    post:
+      operationId: createSharedLink
+      summary: Create a shared link
+      description: |
+        Create a new shared link with selected companies. You can configure
+        password protection, expiration, and per-company access permissions.
+      tags:
+        - Shared Links
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SharedLinkCreate'
+            example:
+              name: Series A Portfolio for ABC Capital
+              description: Selection of our top Series A companies for review
+              password: secure123
+              expires_at: '2024-06-01T00:00:00Z'
+              companies:
+                - company_id: company-uuid-1
+                  permissions: view_deck
+                - company_id: company-uuid-2
+                  permissions: view
+                - company_id: company-uuid-3
+                  permissions: full
+      responses:
+        '200':
+          description: Shared link created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      link:
+                        $ref: '#/components/schemas/SharedLink'
+              example:
+                success: true
+                data:
+                  link:
+                    id: new-link-uuid
+                    short_code: xyz789ab
+                    short_url: https://app.useroulette.com/s/xyz789ab
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /accounts/{account_id}/shared-links/{id}:
+    get:
+      operationId: getSharedLink
+      summary: Get shared link details
+      description: |
+        Retrieve detailed information about a shared link including
+        the list of included companies and their permissions.
+      tags:
+        - Shared Links
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Shared link details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      link:
+                        $ref: '#/components/schemas/SharedLink'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    patch:
+      operationId: updateSharedLink
+      summary: Update a shared link
+      description: |
+        Update shared link properties including name, password, expiration,
+        active status, and the list of included companies.
+      tags:
+        - Shared Links
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SharedLinkUpdate'
+            examples:
+              deactivate:
+                summary: Deactivate a link
+                value:
+                  is_active: false
+              updateCompanies:
+                summary: Update included companies
+                value:
+                  companies:
+                    - company_id: company-uuid-1
+                      permissions: full
+                    - company_id: company-uuid-4
+                      permissions: view_deck
+              removePassword:
+                summary: Remove password protection
+                value:
+                  password: null
+      responses:
+        '200':
+          description: Shared link updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      link:
+                        $ref: '#/components/schemas/SharedLink'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    delete:
+      operationId: deleteSharedLink
+      summary: Delete a shared link
+      description: |
+        Permanently delete a shared link. The link will immediately
+        stop working and cannot be recovered.
+      tags:
+        - Shared Links
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Shared link deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /accounts/{account_id}/shared-links/{id}/access-logs:
+    get:
+      operationId: getSharedLinkAccessLogs
+      summary: Get shared link access logs
+      description: |
+        Retrieve access logs for a shared link showing who viewed it,
+        when, and from where.
+      tags:
+        - Shared Links
+      parameters:
+        - $ref: '#/components/parameters/AccountIdParam'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Access logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      access_logs:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SharedLinkAccessLog'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+              example:
+                success: true
+                data:
+                  access_logs:
+                    - id: log-uuid-1
+                      shared_link_id: link-uuid
+                      ip_address: 192.168.x.x
+                      user_agent: Mozilla/5.0...
+                      country: US
+                      accessed_at: '2024-01-20T15:30:00Z'
+                    - id: log-uuid-2
+                      shared_link_id: link-uuid
+                      ip_address: 10.0.x.x
+                      user_agent: Chrome/120...
+                      country: UK
+                      accessed_at: '2024-01-19T10:15:00Z'
+                  pagination:
+                    page: 1
+                    limit: 20
+                    total: 42
+                    total_pages: 3
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /short-urls:
+    post:
+      operationId: createShortUrl
+      summary: Create a short URL
+      description: |
+        Create a shortened URL with optional password protection and expiration.
+        Useful for tracking link clicks and sharing protected content.
+      tags:
+        - Short URLs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - original_url
+                - account_id
+              properties:
+                original_url:
+                  type: string
+                  format: uri
+                  description: The URL to shorten
+                  example: https://example.com/very/long/path/to/resource
+                account_id:
+                  type: string
+                  format: uuid
+                  description: Account creating the short URL
+                password:
+                  type: string
+                  nullable: true
+                  description: |
+                    Optional password protection:
+                    - Provide a password string for custom password
+                    - Use "auto-generate" to generate a random password
+                    - Omit or set to null for no password
+                expires_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  description: Optional expiration date
+                metadata:
+                  type: object
+                  additionalProperties: true
+                  description: Custom metadata to attach to the URL
+            examples:
+              simple:
+                summary: Simple short URL
+                value:
+                  original_url: https://example.com/document.pdf
+                  account_id: account-uuid
+              withPassword:
+                summary: Password protected
+                value:
+                  original_url: https://example.com/confidential.pdf
+                  account_id: account-uuid
+                  password: secure123
+              autoPassword:
+                summary: Auto-generated password
+                value:
+                  original_url: https://example.com/private.pdf
+                  account_id: account-uuid
+                  password: auto-generate
+              withExpiry:
+                summary: With expiration
+                value:
+                  original_url: https://example.com/temp-link
+                  account_id: account-uuid
+                  expires_at: '2024-02-01T00:00:00Z'
+      responses:
+        '200':
+          description: Short URL created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      short_code:
+                        type: string
+                        description: The unique short code
+                        example: abc12xyz
+                      short_url:
+                        type: string
+                        format: uri
+                        description: Full shortened URL
+                        example: https://app.useroulette.com/r/abc12xyz
+                      password:
+                        type: string
+                        nullable: true
+                        description: |
+                          The password for the URL (only returned when auto-generated).
+                          Store this - it won't be returned again.
+                      expires_at:
+                        type: string
+                        format: date-time
+                        nullable: true
+              example:
+                success: true
+                data:
+                  short_code: abc12xyz
+                  short_url: https://app.useroulette.com/r/abc12xyz
+                  password: auto-gen-pass123
+                  expires_at: null
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /short-urls/resolve:
+    get:
+      operationId: resolveShortUrl
+      summary: Resolve a short URL
+      description: |
+        Resolve a short code to its original URL. If the URL is password
+        protected, the correct password must be provided.
+      tags:
+        - Short URLs
+      parameters:
+        - name: short_code
+          in: query
+          required: true
+          description: The short code to resolve
+          schema:
+            type: string
+        - name: password
+          in: query
+          required: false
+          description: Password (if the URL is protected)
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to original URL
+          headers:
+            Location:
+              description: The original URL
+              schema:
+                type: string
+                format: uri
+        '400':
+          description: Invalid short code or missing password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Incorrect password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Short URL not found or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Key
+      description: |
+        API key authentication. Generate keys from your account settings.
+
+        Include in header: `Authorization: Bearer YOUR_API_KEY`
+  schemas:
+    Error:
+      type: object
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: Human-readable error message
+          example: Invalid request body
+        data:
+          type: 'null'
+          example: null
+        authType:
+          type: string
+          enum:
+            - api_key
+            - session
+            - jwt
+          example: api_key
+    Pagination:
+      type: object
+      required:
+        - page
+        - limit
+        - total
+        - total_pages
+      properties:
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          description: Items per page
+          example: 20
+        total:
+          type: integer
+          description: Total number of items
+          example: 150
+        total_pages:
+          type: integer
+          description: Total number of pages
+          example: 8
+        has_next:
+          type: boolean
+          description: Whether there is a next page
+          example: true
+        has_prev:
+          type: boolean
+          description: Whether there is a previous page
+          example: false
+    Timestamp:
+      type: string
+      format: date-time
+      description: ISO 8601 timestamp
+      example: '2024-01-15T10:30:00Z'
+    UUID:
+      type: string
+      format: uuid
+      description: Universally unique identifier
+      example: 550e8400-e29b-41d4-a716-446655440000
+    Metadata:
+      type: object
+      additionalProperties: true
+      description: Arbitrary key-value metadata
+      example:
+        custom_field: custom_value
+        priority: high
+    CompanyStatus:
+      type: object
+      required:
+        - id
+        - account_id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the status
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+        account_id:
+          type: string
+          format: uuid
+          description: Account/team this status belongs to
+        name:
+          type: string
+          description: Status name displayed in the pipeline
+          example: Due Diligence
+          maxLength: 100
+        color:
+          type: string
+          description: Hex color code for the status
+          pattern: ^#[0-9A-Fa-f]{6}$
+          example: '#3B82F6'
+        rank:
+          type: integer
+          description: Order position in the pipeline (lower = earlier stage)
+          example: 2
+        description:
+          type: string
+          description: Optional description of this pipeline stage
+          example: Companies under active due diligence review
+        is_default:
+          type: boolean
+          description: Whether this is the default status for new companies
+          default: false
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CompanyStatusCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        color:
+          type: string
+          pattern: ^#[0-9A-Fa-f]{6}$
+          default: '#6B7280'
+        rank:
+          type: integer
+          description: Position in pipeline. If not provided, added at the end.
+        description:
+          type: string
+        is_default:
+          type: boolean
+          default: false
+    CompanyStatusUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        color:
+          type: string
+          pattern: ^#[0-9A-Fa-f]{6}$
+        rank:
+          type: integer
+        description:
+          type: string
+        is_default:
+          type: boolean
+    CompanyStatusListResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanyStatus'
+        authType:
+          type: string
+          enum:
+            - api_key
+            - session
+            - jwt
+    CompanyStatusCountsResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: Total number of companies
+              example: 150
+            no_status:
+              type: integer
+              description: Companies without a status assigned
+              example: 12
+            statuses:
+              type: array
+              items:
+                type: object
+                properties:
+                  status_id:
+                    type: string
+                    format: uuid
+                  status_name:
+                    type: string
+                  count:
+                    type: integer
+              example:
+                - status_id: uuid-1
+                  status_name: Initial Review
+                  count: 45
+                - status_id: uuid-2
+                  status_name: Due Diligence
+                  count: 23
+    Company:
+      type: object
+      required:
+        - id
+        - account_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the company
+          example: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+        account_id:
+          type: string
+          format: uuid
+          description: Account/team this company belongs to
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          description: Company name
+          example: Acme Corp
+          maxLength: 255
+        website:
+          type: string
+          format: uri
+          description: Company website URL
+          example: https://acme.com
+        description:
+          type: string
+          description: Brief description of the company
+          example: AI-powered automation platform for enterprises
+        deck_link:
+          type: string
+          format: uri
+          description: URL to the pitch deck (if hosted externally)
+          example: https://docsend.com/view/xyz123
+        deck_storage_path:
+          type: string
+          description: Internal storage path for uploaded pitch deck
+          example: companies/7c9e6679/deck.pdf
+        notes:
+          type: string
+          description: Internal notes about the company
+          example: Met at TechCrunch Disrupt. Strong team background.
+        company_status_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Current deal flow status
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+        visibility:
+          type: string
+          enum:
+            - private
+            - shared
+            - team
+          description: |
+            Visibility level:
+            - `private`: Only visible to the creator
+            - `shared`: Visible to specific users via company_shared_access
+            - `team`: Visible to all team members
+          default: team
+          example: team
+        source:
+          type: string
+          enum:
+            - manual
+            - email
+            - form
+            - referral
+            - website
+            - event
+            - other
+          description: How the company was added to the pipeline
+          example: email
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Custom metadata fields
+          example:
+            industry: SaaS
+            stage: Series A
+            location: San Francisco, CA
+        created_by:
+          type: string
+          format: uuid
+          description: User who created this company record
+          example: user-uuid-here
+        created_at:
+          type: string
+          format: date-time
+          description: When the company was created
+          example: '2024-01-15T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: When the company was last updated
+          example: '2024-01-20T14:45:00Z'
+    CompanyCreate:
+      type: object
+      required:
+        - account_id
+      properties:
+        account_id:
+          type: string
+          format: uuid
+          description: Account/team this company belongs to
+        name:
+          type: string
+          description: Company name
+          maxLength: 255
+        website:
+          type: string
+          format: uri
+          description: Company website URL
+        description:
+          type: string
+          description: Brief description
+        deck_link:
+          type: string
+          format: uri
+          description: External pitch deck URL
+        notes:
+          type: string
+          description: Internal notes
+        company_status_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Initial deal flow status
+        visibility:
+          type: string
+          enum:
+            - private
+            - shared
+            - team
+          default: team
+        source:
+          type: string
+          enum:
+            - manual
+            - email
+            - form
+            - referral
+            - website
+            - event
+            - other
+          default: manual
+        metadata:
+          type: object
+          additionalProperties: true
+    CompanyUpdate:
+      type: object
+      description: All fields are optional for partial updates
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        website:
+          type: string
+          format: uri
+        description:
+          type: string
+        deck_link:
+          type: string
+          format: uri
+        notes:
+          type: string
+        company_status_id:
+          type: string
+          format: uuid
+          nullable: true
+        visibility:
+          type: string
+          enum:
+            - private
+            - shared
+            - team
+        source:
+          type: string
+          enum:
+            - manual
+            - email
+            - form
+            - referral
+            - website
+            - event
+            - other
+        metadata:
+          type: object
+          additionalProperties: true
+    CompanyListResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required:
+            - companies
+            - pagination
+          properties:
+            companies:
+              type: array
+              items:
+                $ref: '#/components/schemas/Company'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+        authType:
+          type: string
+          enum:
+            - api_key
+            - session
+            - jwt
+    CompanyResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required:
+            - company
+          properties:
+            company:
+              $ref: '#/components/schemas/Company'
+            pdf_download_url:
+              type: string
+              format: uri
+              description: Signed URL for downloading the pitch deck PDF (if requested)
+        authType:
+          type: string
+          enum:
+            - api_key
+            - session
+            - jwt
+    CompanySharedAccess:
+      type: object
+      required:
+        - id
+        - company_id
+        - user_id
+      properties:
+        id:
+          type: string
+          format: uuid
+        company_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+    CompanyAttachment:
+      type: object
+      required:
+        - id
+        - company_id
+        - title
+        - storage_path
+      properties:
+        id:
+          type: string
+          format: uuid
+        company_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: Financial Projections
+        description:
+          type: string
+          example: Q4 2024 financial projections spreadsheet
+        storage_path:
+          type: string
+        file_type:
+          type: string
+          example: application/pdf
+        file_size:
+          type: integer
+          description: File size in bytes
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    BulkActionRequest:
+      type: object
+      required:
+        - company_ids
+        - action
+      properties:
+        company_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+          description: List of company IDs to perform the action on
+        action:
+          type: string
+          enum:
+            - update_status
+            - update_source
+            - delete
+          description: The bulk action to perform
+        company_status_id:
+          type: string
+          format: uuid
+          description: Required when action is 'update_status'
+        source:
+          type: string
+          enum:
+            - manual
+            - email
+            - form
+            - referral
+            - website
+            - event
+            - other
+          description: Required when action is 'update_source'
+    BulkActionResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            updated_count:
+              type: integer
+              description: Number of companies affected
+              example: 5
+            message:
+              type: string
+              example: Successfully updated 5 companies
+    DuplicateGroup:
+      type: object
+      properties:
+        companies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Company'
+        similarity_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: How similar the companies are (0-1)
+          example: 0.95
+    DuplicatesResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            duplicate_groups:
+              type: array
+              items:
+                $ref: '#/components/schemas/DuplicateGroup'
+            total_duplicates:
+              type: integer
+            total_companies_affected:
+              type: integer
+    MergeDuplicatesRequest:
+      type: object
+      required:
+        - keep_company_id
+        - delete_company_ids
+      properties:
+        keep_company_id:
+          type: string
+          format: uuid
+          description: The company to keep (others will be merged into this)
+        delete_company_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Companies to merge and delete
+        merge_metadata:
+          type: boolean
+          default: true
+          description: Whether to merge metadata from deleted companies
+    AnalyzeResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            company_name:
+              type: string
+            description:
+              type: string
+            industry:
+              type: string
+            stage:
+              type: string
+            location:
+              type: string
+            team:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  role:
+                    type: string
+                  linkedin:
+                    type: string
+            funding:
+              type: object
+              properties:
+                amount_raised:
+                  type: string
+                target_raise:
+                  type: string
+            insights:
+              type: array
+              items:
+                type: string
+            confidence:
+              type: number
+              format: float
+              description: AI confidence score (0-1)
+    DashboardData:
+      type: object
+      properties:
+        stats:
+          type: object
+          properties:
+            total_companies:
+              type: integer
+              description: Total number of companies
+              example: 150
+            companies_this_month:
+              type: integer
+              description: Companies added this month
+              example: 12
+            active_deals:
+              type: integer
+              description: Companies in active pipeline stages
+              example: 45
+            meetings_this_week:
+              type: integer
+              description: Meetings scheduled this week
+              example: 8
+        pipeline_summary:
+          type: array
+          items:
+            type: object
+            properties:
+              status_id:
+                type: string
+                format: uuid
+              status_name:
+                type: string
+              color:
+                type: string
+              count:
+                type: integer
+          description: Company counts by pipeline stage
+        recent_activity:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              type:
+                type: string
+                enum:
+                  - company_added
+                  - company_updated
+                  - status_changed
+                  - email_received
+                  - meeting_scheduled
+              description:
+                type: string
+              company_id:
+                type: string
+                format: uuid
+                nullable: true
+              company_name:
+                type: string
+                nullable: true
+              created_at:
+                type: string
+                format: date-time
+          description: Recent activity feed
+        charts:
+          type: object
+          properties:
+            companies_over_time:
+              type: array
+              items:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    format: date
+                  count:
+                    type: integer
+              description: Daily company additions
+            source_breakdown:
+              type: array
+              items:
+                type: object
+                properties:
+                  source:
+                    type: string
+                  count:
+                    type: integer
+              description: Companies by source
+    DashboardResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/DashboardData'
+    Email:
+      type: object
+      required:
+        - id
+        - account_id
+        - from_email
+        - subject
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the email
+        account_id:
+          type: string
+          format: uuid
+          description: Account this email belongs to
+        from_email:
+          type: string
+          format: email
+          description: Sender's email address
+          example: founder@startup.com
+        to_emails:
+          type: array
+          items:
+            type: string
+            format: email
+          description: Recipient email addresses
+        subject:
+          type: string
+          description: Email subject line
+          example: 'Re: Investment Opportunity - TechStartup Inc'
+        content:
+          type: string
+          description: |
+            Email body content. Note: This field is excluded from list queries
+            for performance. Use the get single email endpoint for full content.
+        content_preview:
+          type: string
+          description: Truncated preview of the email content
+          maxLength: 200
+        company_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Linked company IDs
+        tags:
+          type: array
+          items:
+            type: string
+          description: Tags/labels applied to the email
+          example:
+            - follow-up
+            - warm-intro
+        processed:
+          type: boolean
+          description: Whether this email has been processed/reviewed
+          default: false
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional metadata
+        attachments_count:
+          type: integer
+          description: Number of attachments
+          example: 2
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    EmailDetail:
+      allOf:
+        - $ref: '#/components/schemas/Email'
+        - type: object
+          properties:
+            content:
+              type: string
+              description: Full email body content
+            attachments:
+              type: array
+              items:
+                $ref: '#/components/schemas/EmailAttachment'
+    EmailAttachment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email_id:
+          type: string
+          format: uuid
+        filename:
+          type: string
+          example: pitch_deck.pdf
+        content_type:
+          type: string
+          example: application/pdf
+        size:
+          type: integer
+          description: File size in bytes
+        storage_path:
+          type: string
+        download_url:
+          type: string
+          format: uri
+          description: Signed download URL (when requested)
+        created_at:
+          type: string
+          format: date-time
+    EmailCreate:
+      type: object
+      required:
+        - from_email
+        - subject
+        - content
+      properties:
+        from_email:
+          type: string
+          format: email
+        to_emails:
+          type: array
+          items:
+            type: string
+            format: email
+        subject:
+          type: string
+        content:
+          type: string
+        company_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          additionalProperties: true
+    EmailListResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            emails:
+              type: array
+              items:
+                $ref: '#/components/schemas/Email'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+    EmailTagsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            tags:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  count:
+                    type: integer
+                    description: Number of emails with this tag
+              example:
+                - name: follow-up
+                  count: 23
+                - name: warm-intro
+                  count: 15
+                - name: cold-outreach
+                  count: 8
+    FormSubmission:
+      type: object
+      required:
+        - id
+        - account_id
+        - data
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the submission
+        account_id:
+          type: string
+          format: uuid
+          description: Account this submission belongs to
+        company_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Linked company (if matched)
+        integration_type:
+          type: string
+          enum:
+            - tally
+            - specter
+            - manual
+          description: Source integration that created this submission
+        data:
+          type: object
+          additionalProperties: true
+          description: |
+            Form field data. Structure varies by form/integration.
+            Typically contains an array of field objects with key, label, type, and value.
+          example:
+            - key: question_abc123
+              label: Company Name
+              type: INPUT_TEXT
+              value: Acme Corp
+            - key: question_def456
+              label: Contact Email
+              type: INPUT_EMAIL
+              value: founder@acme.com
+            - key: question_ghi789
+              label: Funding Stage
+              type: MULTIPLE_CHOICE
+              value: seed
+              options:
+                - id: opt1
+                  text: Pre-seed
+                - id: opt2
+                  text: Seed
+                - id: opt3
+                  text: Series A
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional metadata about the submission
+        processed:
+          type: boolean
+          description: Whether this submission has been processed/reviewed
+          default: false
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    FormSubmissionCreate:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          additionalProperties: true
+          description: Form field data
+        company_id:
+          type: string
+          format: uuid
+          description: Link to an existing company
+        metadata:
+          type: object
+          additionalProperties: true
+    FormSubmissionListResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            submissions:
+              type: array
+              items:
+                $ref: '#/components/schemas/FormSubmission'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+    Integration:
+      type: object
+      required:
+        - id
+        - account_id
+        - integration_type
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the integration
+        account_id:
+          type: string
+          format: uuid
+          description: Account this integration belongs to
+        integration_type:
+          type: string
+          enum:
+            - tally
+            - specter
+          description: Type of integration
+        is_active:
+          type: boolean
+          description: Whether the integration is currently active
+        has_auth:
+          type: boolean
+          description: Whether authentication credentials are configured
+        last_sync_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When data was last synced from this integration
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Integration-specific metadata
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    IntegrationCreate:
+      type: object
+      required:
+        - integration_type
+      properties:
+        integration_type:
+          type: string
+          enum:
+            - tally
+            - specter
+        secret:
+          type: string
+          description: |
+            For Tally: The webhook signing secret.
+            Required when integration_type is 'tally'.
+        api_key:
+          type: string
+          description: |
+            For Specter: The API key.
+            Required when integration_type is 'specter'.
+    IntegrationUpdate:
+      type: object
+      properties:
+        is_active:
+          type: boolean
+        secret:
+          type: string
+          description: Update Tally signing secret
+        api_key:
+          type: string
+          description: Update Specter API key
+    IntegrationListResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            integrations:
+              type: array
+              items:
+                $ref: '#/components/schemas/Integration'
+    InvestorDashboard:
+      type: object
+      required:
+        - id
+        - account_id
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the dashboard
+        account_id:
+          type: string
+          format: uuid
+          description: Account this dashboard belongs to
+        is_active:
+          type: boolean
+          description: Whether the dashboard is publicly accessible
+        password_protected:
+          type: boolean
+          description: Whether a password is required to access
+        short_code:
+          type: string
+          description: Unique code for the dashboard URL
+          example: inv-abc123
+        dashboard_url:
+          type: string
+          format: uri
+          description: Full URL for the investor dashboard
+          example: https://app.useroulette.com/investor/inv-abc123
+        shared_permissions:
+          type: array
+          items:
+            type: string
+            enum:
+              - view_portfolio
+              - view_metrics
+              - view_updates
+              - download_reports
+          description: |
+            What information is shared on the dashboard:
+            - `view_portfolio`: List of portfolio companies
+            - `view_metrics`: Performance metrics and charts
+            - `view_updates`: Company updates and news
+            - `download_reports`: Ability to download reports
+        last_accessed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the dashboard was last viewed
+        access_count:
+          type: integer
+          description: Total number of views
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    InvestorDashboardCreate:
+      type: object
+      properties:
+        password:
+          type: string
+          description: Optional password for access
+        shared_permissions:
+          type: array
+          items:
+            type: string
+            enum:
+              - view_portfolio
+              - view_metrics
+              - view_updates
+              - download_reports
+          default:
+            - view_portfolio
+        is_active:
+          type: boolean
+          default: true
+    InvestorDashboardUpdate:
+      type: object
+      properties:
+        password:
+          type: string
+          nullable: true
+          description: Set to null to remove password protection
+        shared_permissions:
+          type: array
+          items:
+            type: string
+            enum:
+              - view_portfolio
+              - view_metrics
+              - view_updates
+              - download_reports
+        is_active:
+          type: boolean
+    InvestorDashboardAccessLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        dashboard_id:
+          type: string
+          format: uuid
+        ip_address:
+          type: string
+        user_agent:
+          type: string
+        country:
+          type: string
+        accessed_at:
+          type: string
+          format: date-time
+    MeetingMinutes:
+      type: object
+      required:
+        - id
+        - account_id
+        - title
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the meeting minutes
+        account_id:
+          type: string
+          format: uuid
+          description: Account this belongs to
+        company_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Linked company
+        title:
+          type: string
+          description: Meeting title
+          example: Initial Call - TechStartup Inc
+        content:
+          type: string
+          description: Meeting notes content (markdown supported)
+          example: |
+            ## Attendees
+            - John Doe (Founder)
+            - Jane Smith (VC Partner)
+
+            ## Discussion Points
+            - Product roadmap overview
+            - Current traction metrics
+            - Funding requirements
+        meeting_date:
+          type: string
+          format: date-time
+          description: When the meeting took place
+        attendees:
+          type: array
+          items:
+            type: string
+          description: List of attendee names
+          example:
+            - John Doe
+            - Jane Smith
+        processed:
+          type: boolean
+          description: Whether these minutes have been processed/reviewed
+          default: false
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional metadata
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    MeetingMinutesCreate:
+      type: object
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        company_id:
+          type: string
+          format: uuid
+        meeting_date:
+          type: string
+          format: date-time
+        attendees:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          additionalProperties: true
+    MeetingMinutesUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        company_id:
+          type: string
+          format: uuid
+          nullable: true
+        meeting_date:
+          type: string
+          format: date-time
+        attendees:
+          type: array
+          items:
+            type: string
+        processed:
+          type: boolean
+        metadata:
+          type: object
+          additionalProperties: true
+    MeetingMinutesListResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            meeting_minutes:
+              type: array
+              items:
+                $ref: '#/components/schemas/MeetingMinutes'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+    Member:
+      type: object
+      required:
+        - id
+        - user_id
+        - account_id
+        - role
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Membership record ID
+        user_id:
+          type: string
+          format: uuid
+          description: User's unique identifier
+        account_id:
+          type: string
+          format: uuid
+          description: Account/team ID
+        role:
+          type: string
+          enum:
+            - owner
+            - admin
+            - member
+          description: Member's role in the team
+        name:
+          type: string
+          description: Member's display name
+          example: John Doe
+        email:
+          type: string
+          format: email
+          description: Member's email address
+        picture_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Profile picture URL
+        created_at:
+          type: string
+          format: date-time
+          description: When the user joined the team
+    Invitation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+          description: Invited email address
+        role:
+          type: string
+          enum:
+            - admin
+            - member
+          description: Role the invitee will have
+        invited_by:
+          type: string
+          format: uuid
+          description: User ID of who sent the invitation
+        expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+    MembersResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            members:
+              type: array
+              items:
+                $ref: '#/components/schemas/Member'
+            invitations:
+              type: array
+              items:
+                $ref: '#/components/schemas/Invitation'
+    SharedLink:
+      type: object
+      required:
+        - id
+        - account_id
+        - short_code
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the shared link
+        account_id:
+          type: string
+          format: uuid
+          description: Account this link belongs to
+        name:
+          type: string
+          description: Internal name for the shared link
+          example: Q1 2024 Portfolio for LP
+        description:
+          type: string
+          description: Description of what's being shared
+        short_code:
+          type: string
+          description: Unique short code for the URL
+          example: abc123xy
+        short_url:
+          type: string
+          format: uri
+          description: Full shareable URL
+          example: https://app.useroulette.com/s/abc123xy
+        password_protected:
+          type: boolean
+          description: Whether a password is required to access
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the link expires (null = never)
+        is_active:
+          type: boolean
+          description: Whether the link is currently active
+          default: true
+        companies:
+          type: array
+          items:
+            $ref: '#/components/schemas/SharedLinkCompany'
+          description: Companies included in this shared link
+        view_count:
+          type: integer
+          description: Number of times the link has been accessed
+          example: 42
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    SharedLinkCompany:
+      type: object
+      properties:
+        company_id:
+          type: string
+          format: uuid
+        company_name:
+          type: string
+        permissions:
+          type: string
+          enum:
+            - view
+            - view_deck
+            - full
+          description: |
+            Access level for this company:
+            - `view`: Basic company info only
+            - `view_deck`: Info + pitch deck
+            - `full`: All available information
+    SharedLinkCreate:
+      type: object
+      required:
+        - name
+        - companies
+      properties:
+        name:
+          type: string
+          description: Internal name for the shared link
+        description:
+          type: string
+        password:
+          type: string
+          description: Optional password protection
+        expires_at:
+          type: string
+          format: date-time
+          description: Optional expiration date
+        companies:
+          type: array
+          items:
+            type: object
+            required:
+              - company_id
+            properties:
+              company_id:
+                type: string
+                format: uuid
+              permissions:
+                type: string
+                enum:
+                  - view
+                  - view_deck
+                  - full
+                default: view
+          minItems: 1
+    SharedLinkUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        password:
+          type: string
+          nullable: true
+          description: Set to null to remove password protection
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_active:
+          type: boolean
+        companies:
+          type: array
+          items:
+            type: object
+            required:
+              - company_id
+            properties:
+              company_id:
+                type: string
+                format: uuid
+              permissions:
+                type: string
+                enum:
+                  - view
+                  - view_deck
+                  - full
+    SharedLinkListResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            links:
+              type: array
+              items:
+                $ref: '#/components/schemas/SharedLink'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+    SharedLinkAccessLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        shared_link_id:
+          type: string
+          format: uuid
+        ip_address:
+          type: string
+          description: Visitor's IP address (anonymized)
+        user_agent:
+          type: string
+          description: Browser/device information
+        country:
+          type: string
+          description: Detected country
+          example: US
+        accessed_at:
+          type: string
+          format: date-time
+  parameters:
+    AccountIdParam:
+      name: account_id
+      in: path
+      required: true
+      description: The unique identifier of the account/team
+      schema:
+        type: string
+        format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440000
+    CompanyIdParam:
+      name: id
+      in: path
+      required: true
+      description: The unique identifier of the company
+      schema:
+        type: string
+        format: uuid
+      example: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+    PageParam:
+      name: page
+      in: query
+      required: false
+      description: Page number for pagination (starts at 1)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      example: 1
+    LimitParam:
+      name: limit
+      in: query
+      required: false
+      description: Number of items per page (max 100)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      example: 20
+    SortByParam:
+      name: sort_by
+      in: query
+      required: false
+      description: Field to sort results by
+      schema:
+        type: string
+        enum:
+          - created_at
+          - updated_at
+          - name
+        default: created_at
+      example: created_at
+    SortOrderParam:
+      name: sort_order
+      in: query
+      required: false
+      description: Sort direction
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+        default: desc
+      example: desc
+    SearchParam:
+      name: search
+      in: query
+      required: false
+      description: Full-text search query
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 500
+      example: acme
+  responses:
+    SuccessResponse:
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - data
+            properties:
+              success:
+                type: boolean
+                example: true
+              data:
+                type: object
+              authType:
+                type: string
+                enum:
+                  - api_key
+                  - session
+                  - jwt
+                example: api_key
+    ErrorResponse:
+      description: Error response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequestError:
+      description: Bad request - invalid parameters or request body
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error: Invalid request body
+            data: null
+    UnauthorizedError:
+      description: Unauthorized - missing or invalid API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error: Invalid or expired API key
+            data: null
+    ForbiddenError:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error: You do not have permission to access this resource
+            data: null
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error: Resource not found
+            data: null
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error: Internal server error
+            data: null
+  examples: {}

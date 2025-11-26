@@ -1,33 +1,134 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: 'API Reference'
+description: 'Complete reference for all Roulette API endpoints'
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+## Base URL
 
-## Welcome
+All API requests should be made to:
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
-
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+```
+https://app.useroulette.com/api/v1
+```
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+All endpoints require authentication via Bearer token. Include your API key in the Authorization header:
+
+```bash
+Authorization: Bearer YOUR_API_KEY
+```
+
+<Card
+  title="Get your API key"
+  icon="key"
+  href="/authentication"
+>
+  Learn how to generate and manage API keys
+</Card>
+
+## Response Format
+
+All responses follow a consistent JSON structure:
+
+<CodeGroup>
+
+```json Success Response
+{
+  "success": true,
+  "data": {
+    // Response data here
+  },
+  "authType": "api_key"
+}
+```
+
+```json Error Response
+{
+  "success": false,
+  "error": "Human readable error message",
+  "data": null
+}
+```
+
+</CodeGroup>
+
+## HTTP Status Codes
+
+| Status | Description |
+|--------|-------------|
+| `200` | Success |
+| `400` | Bad Request - Invalid parameters |
+| `401` | Unauthorized - Invalid or missing API key |
+| `403` | Forbidden - Insufficient permissions |
+| `404` | Not Found - Resource doesn't exist |
+| `429` | Too Many Requests - Rate limit exceeded |
+| `500` | Internal Server Error |
+
+## Pagination
+
+List endpoints support pagination with these query parameters:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | integer | 1 | Page number |
+| `limit` | integer | 20 | Items per page (max 100) |
+| `sort_by` | string | `created_at` | Field to sort by |
+| `sort_order` | string | `desc` | Sort direction (`asc` or `desc`) |
+
+Paginated responses include:
 
 ```json
-"security": [
-  {
-    "bearerAuth": []
+{
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 150,
+    "total_pages": 8,
+    "has_next": true,
+    "has_prev": false
   }
-]
+}
 ```
+
+## Rate Limiting
+
+- **1000 requests** per minute
+- **100 requests** per second
+
+Rate limit headers are included in all responses:
+
+| Header | Description |
+|--------|-------------|
+| `X-RateLimit-Limit` | Max requests per window |
+| `X-RateLimit-Remaining` | Requests remaining |
+| `X-RateLimit-Reset` | Unix timestamp when window resets |
+
+## Available Endpoints
+
+<CardGroup cols={2}>
+  <Card title="Companies" icon="building" href="/api-reference/companies/list">
+    Manage companies in your pipeline
+  </Card>
+  <Card title="Company Statuses" icon="diagram-project" href="/api-reference/company-statuses/list">
+    Configure deal flow stages
+  </Card>
+  <Card title="Form Submissions" icon="file-lines" href="/api-reference/form-submissions/list">
+    Handle form data
+  </Card>
+  <Card title="Emails" icon="envelope" href="/api-reference/emails/list">
+    Manage email records
+  </Card>
+  <Card title="Meeting Minutes" icon="notes" href="/api-reference/meeting-minutes/list">
+    Store meeting notes
+  </Card>
+  <Card title="Shared Links" icon="link" href="/api-reference/shared-links/list">
+    Create shareable portfolios
+  </Card>
+  <Card title="Integrations" icon="plug" href="/api-reference/integrations/list">
+    Configure third-party connections
+  </Card>
+  <Card title="Investor Dashboard" icon="chart-line" href="/api-reference/investor-dashboard/get">
+    Manage LP portal
+  </Card>
+</CardGroup>
