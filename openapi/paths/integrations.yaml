@@ -53,7 +53,7 @@
       Tally forms can send webhooks to Roulette when submissions are received.
       Provide the signing secret from your Tally webhook settings.
 
-      Webhook URL: `https://app.useroulette.com/api/v1/accounts/{account_id}/form-submissions/tally`
+      Webhook URL: `https://useroulette.com/api/v1/accounts/{account_id}/form-submissions/tally`
 
       ## Specter Integration
 

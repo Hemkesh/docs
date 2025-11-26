@@ -90,7 +90,7 @@
                       type: string
                       format: uri
                       description: Full shortened URL
-                      example: "https://app.useroulette.com/r/abc12xyz"
+                      example: "https://useroulette.com/r/abc12xyz"
                     password:
                       type: string
                       nullable: true
@@ -105,7 +105,7 @@
               success: true
               data:
                 short_code: "abc12xyz"
-                short_url: "https://app.useroulette.com/r/abc12xyz"
+                short_url: "https://useroulette.com/r/abc12xyz"
                 password: "auto-gen-pass123"
                 expires_at: null
       '400':

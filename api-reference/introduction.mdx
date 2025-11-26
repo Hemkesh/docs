@@ -8,7 +8,7 @@ description: 'Complete reference for all Roulette API endpoints'
 All API requests should be made to:
 
 ```
-https://app.useroulette.com/api/v1
+https://useroulette.com/api/v1
 ```
 
 ## Authentication
@@ -72,24 +72,27 @@ List endpoints support pagination with these query parameters:
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `page` | integer | 1 | Page number |
-| `limit` | integer | 20 | Items per page (max 100) |
+| `limit` | integer | 25 | Items per page (max 100) |
 | `sort_by` | string | `created_at` | Field to sort by |
 | `sort_order` | string | `desc` | Sort direction (`asc` or `desc`) |
 
-Paginated responses include:
+Paginated responses include cursor-based pagination metadata:
 
 ```json
 {
   "pagination": {
     "page": 1,
-    "limit": 20,
-    "total": 150,
-    "total_pages": 8,
+    "limit": 25,
     "has_next": true,
     "has_prev": false
   }
 }
 ```
+
+<Note>
+  For performance reasons, total counts are not included in pagination responses.
+  Use `has_next` and `has_prev` to determine if more pages exist.
+</Note>
 
 ## Rate Limiting
 

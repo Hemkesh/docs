@@ -51,7 +51,7 @@ Each status has the following properties:
 ## Creating Custom Statuses
 
 ```bash
-curl -X POST "https://app.useroulette.com/api/v1/accounts/{account_id}/company-statuses" \
+curl -X POST "https://useroulette.com/api/v1/accounts/{account_id}/company-statuses" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -83,7 +83,7 @@ Update a company's status by setting its `company_status_id`:
 <CodeGroup>
 
 ```bash cURL
-curl -X PATCH "https://app.useroulette.com/api/v1/companies/{company_id}" \
+curl -X PATCH "https://useroulette.com/api/v1/companies/{company_id}" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -92,7 +92,7 @@ curl -X PATCH "https://app.useroulette.com/api/v1/companies/{company_id}" \
 ```
 
 ```javascript JavaScript
-await fetch(`https://app.useroulette.com/api/v1/companies/${companyId}`, {
+await fetch(`https://useroulette.com/api/v1/companies/${companyId}`, {
   method: 'PATCH',
   headers: {
     'Authorization': `Bearer ${API_KEY}`,
@@ -111,7 +111,7 @@ await fetch(`https://app.useroulette.com/api/v1/companies/${companyId}`, {
 Move multiple companies at once using the bulk actions endpoint:
 
 ```bash
-curl -X POST "https://app.useroulette.com/api/v1/companies/bulk-actions" \
+curl -X POST "https://useroulette.com/api/v1/companies/bulk-actions" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -126,7 +126,7 @@ curl -X POST "https://app.useroulette.com/api/v1/companies/bulk-actions" \
 Get a quick overview of your pipeline with status counts:
 
 ```bash
-curl -X GET "https://app.useroulette.com/api/v1/accounts/{account_id}/company-status-counts" \
+curl -X GET "https://useroulette.com/api/v1/accounts/{account_id}/company-status-counts" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
@@ -154,7 +154,7 @@ Response:
 Update the `rank` property to change the order statuses appear in the pipeline:
 
 ```bash
-curl -X PATCH "https://app.useroulette.com/api/v1/accounts/{account_id}/company-statuses/{status_id}" \
+curl -X PATCH "https://useroulette.com/api/v1/accounts/{account_id}/company-statuses/{status_id}" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

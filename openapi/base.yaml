@@ -30,9 +30,9 @@ info:
 
     ## Pagination
 
-    List endpoints support pagination using the following query parameters:
+    List endpoints support cursor-based pagination using the following query parameters:
     - `page`: Page number (default: 1)
-    - `limit`: Items per page (default: 20, max: 100)
+    - `limit`: Items per page (default: 25, max: 100)
 
     Paginated responses include pagination metadata:
     ```json
@@ -40,14 +40,15 @@ info:
       "data": [...],
       "pagination": {
         "page": 1,
-        "limit": 20,
-        "total": 150,
-        "total_pages": 8,
+        "limit": 25,
         "has_next": true,
         "has_prev": false
       }
     }
     ```
+
+    **Note**: For performance reasons, total counts (`total`, `total_pages`) are not included.
+    Use `has_next` and `has_prev` to determine if more pages exist.
 
     ## Errors
 
@@ -79,7 +80,7 @@ info:
     url: https://useroulette.com/license
 
 servers:
-  - url: https://app.useroulette.com/api/v1
+  - url: https://useroulette.com/api/v1
     description: Production server
   - url: http://localhost:3000/api/v1
     description: Local development server

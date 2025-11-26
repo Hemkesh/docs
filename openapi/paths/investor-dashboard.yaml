@@ -36,7 +36,7 @@
                   is_active: true
                   password_protected: true
                   short_code: "inv-abc123"
-                  dashboard_url: "https://app.useroulette.com/investor/inv-abc123"
+                  dashboard_url: "https://useroulette.com/investor/inv-abc123"
                   shared_permissions: ["view_portfolio", "view_metrics"]
                   access_count: 156
                   last_accessed_at: "2024-01-20T14:30:00Z"

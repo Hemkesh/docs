@@ -7,6 +7,9 @@
     description: |
       Retrieve a paginated list of companies in your deal flow pipeline.
       Supports filtering, sorting, and full-text search.
+
+      **Note**: Pagination uses cursor-based `has_next`/`has_prev` for performance.
+      Total counts are not provided to optimize response times.
     tags:
       - Companies
     parameters:
@@ -53,20 +56,37 @@
               success: true
               data:
                 companies:
-                  - id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
-                    account_id: "550e8400-e29b-41d4-a716-446655440000"
-                    name: "Acme Corp"
-                    website: "https://acme.com"
-                    description: "AI-powered automation platform"
+                  - id: "0bbd2344-7c60-4541-80ca-b3a5eb862e5c"
+                    account_id: "90d4ca07-8849-4fa9-b149-5f10d8635449"
+                    name: "Freya's Mirror"
+                    deck_link: "https://storage.tally.so/private/Deck.pdf?id=J8DMJJ&accessToken=..."
                     visibility: "team"
-                    source: "email"
-                    created_at: "2024-01-15T10:30:00Z"
-                    updated_at: "2024-01-20T14:45:00Z"
+                    source: "form"
+                    company_status_id: null
+                    notes: "Company deck imported from direct PDF link"
+                    created_at: "2025-11-26T16:09:55.712555+00:00"
+                    updated_at: "2025-11-26T16:10:35.14483+00:00"
+                    created_by: "5e417c4b-ca57-4545-a995-a805a55e5b71"
+                    updated_by: "5e417c4b-ca57-4545-a995-a805a55e5b71"
+                    assignees: []
+                    company_status: null
+                    metadata:
+                      founders:
+                        - name: "Fabian Jichi"
+                          email: "fabian@freyasmirror.ai"
+                          title: "CEO/Founder"
+                          linkedin_profile: "https://www.linkedin.com/in/fabian-jichi/"
+                      ai_analysis: "Virtual try-on solution for fashion e-commerce..."
+                      analyzed_at: "2025-11-26T16:10:35.114Z"
+                      user_preferences:
+                        - type: "text"
+                          field: "Website"
+                          value: "https://www.freyasmirror.ai/"
+                          options: []
+                          show_in_table: true
                 pagination:
                   page: 1
-                  limit: 20
-                  total: 45
-                  total_pages: 3
+                  limit: 25
                   has_next: true
                   has_prev: false
               authType: "api_key"
@@ -75,36 +95,123 @@
       '500':
         $ref: '#/components/responses/InternalServerError'
 
+/companies/upload/ai:
   post:
-    operationId: createCompany
-    summary: Create a company
+    operationId: createCompanyWithAI
+    summary: Create company with AI processing
     description: |
-      Create a new company in your deal flow pipeline.
+      **The recommended way to create companies in Roulette.**
+
+      This intelligent endpoint accepts unstructured text (emails, notes, form data) and
+      file attachments, then uses AI to automatically:
+
+      1. **Extract URLs** from text using regex (handles long signed URLs from DocSend, Tally, etc.)
+      2. **Prioritize deck sources** by known platforms (DocSend, Papermark, Brieflink, Google Drive)
+      3. **Select the best pitch deck** from URLs or files
+      4. **Auto-detect company status** based on content context
+      5. **Auto-detect source** (email, referral, form, etc.) from content
+      6. **Upload remaining files** as attachments
+
+      ## How It Works
+
+      ### URL Priority (Highest → Lowest)
+      1. DocSend links
+      2. Papermark links
+      3. Brieflink links
+      4. Tally storage URLs
+      5. Google Drive links
+      6. Other URLs
+
+      ### File Processing Logic
+      - **Single file**: Always treated as the pitch deck (regardless of type)
+      - **Multiple files**: AI analyzes PDF content to select the best deck candidate
+      - **Fallback**: First PDF file if AI can't determine
+
+      ### Context Analysis
+      When text content is provided (>50 chars), the AI analyzes it to:
+      - Detect appropriate pipeline status based on conversation context
+      - Identify the source (email forward, referral mention, etc.)
+
+      ## Use Cases
+
+      - **Email forwarding**: Paste the full email body + attachments
+      - **Form submissions**: Send form data as text + any uploaded files
+      - **Manual entry**: Provide company info + deck URL or file
+      - **Bulk import**: Process founder outreach emails automatically
+
     tags:
       - Companies
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
-            $ref: '#/components/schemas/CompanyCreate'
-          example:
-            account_id: "550e8400-e29b-41d4-a716-446655440000"
-            name: "TechStartup Inc"
-            website: "https://techstartup.io"
-            description: "Next-gen developer tools"
-            visibility: "team"
-            source: "referral"
-            metadata:
-              industry: "Developer Tools"
-              stage: "Seed"
+            $ref: '#/components/schemas/AiUploadRequest'
+          examples:
+            emailForward:
+              summary: Forward a founder email
+              value:
+                text: |
+                  From: founder@startup.com
+                  Subject: Intro - TechCo Series A
+
+                  Hi, I'm the founder of TechCo. We're building AI tools for developers.
+                  Here's our deck: https://docsend.com/view/abc123
+
+                  We're currently raising a $5M Series A.
+                account_id: "550e8400-e29b-41d4-a716-446655440000"
+            withFiles:
+              summary: Upload with pitch deck file
+              value:
+                text: "Meeting notes from coffee chat with Jane from StartupXYZ"
+                account_id: "550e8400-e29b-41d4-a716-446655440000"
+                name: "StartupXYZ"
+                visibility: "team"
+                file_0: "(binary)"
+            simpleCreate:
+              summary: Simple company with deck URL
+              value:
+                text: "https://pitch.com/public/startup-deck-abc123"
+                account_id: "550e8400-e29b-41d4-a716-446655440000"
+                name: "My Startup"
     responses:
       '200':
-        description: Company created successfully
+        description: Company created successfully with AI analysis
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CompanyResponse'
+              $ref: '#/components/schemas/AiUploadResponse'
+            example:
+              success: true
+              data:
+                company:
+                  id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                  account_id: "550e8400-e29b-41d4-a716-446655440000"
+                  name: "TechCo"
+                  visibility: "team"
+                  source: "email"
+                  company_status_id: "initial-review-uuid"
+                  notes: null
+                  created_at: "2024-01-15T10:30:00Z"
+                  updated_at: "2024-01-15T10:30:00Z"
+                pdfDownloadUrl: "https://storage.useroulette.com/signed-url..."
+                attachments:
+                  - id: "attach-uuid-1"
+                    title: "Financial Model.xlsx"
+                    filePath: "companies/7c9e6679/attachments/financial-model.xlsx"
+                    attachmentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                analysis:
+                  detectedUrls:
+                    - "https://docsend.com/view/abc123"
+                  selectedDeckUrl: "https://docsend.com/view/abc123"
+                  aiReasoning: "Selected DocSend URL as primary deck source (high priority platform)"
+                  contextAnalysis:
+                    statusDetected: true
+                    statusReasoning: "Email mentions 'Series A raise' - assigned to fundraising stage"
+                    sourceDetected: true
+                    sourceReasoning: "Content appears to be a forwarded email from founder"
+                  processedAt: "2024-01-15T10:30:00Z"
+              authType: "api_key"
       '400':
         $ref: '#/components/responses/BadRequestError'
       '401':
@@ -161,7 +268,12 @@
             name: "Acme Corp (Updated)"
             company_status_id: "status-uuid-here"
             metadata:
-              stage: "Series A"
+              user_preferences:
+                - type: "select"
+                  field: "Industry"
+                  value: "AI/ML"
+                  options: ["SaaS", "Fintech", "AI/ML", "Developer Tools"]
+                  show_in_table: true
     responses:
       '200':
         description: Company updated successfully
@@ -212,83 +324,19 @@
       '500':
         $ref: '#/components/responses/InternalServerError'
 
-/companies/upload:
-  post:
-    operationId: uploadCompany
-    summary: Upload company with pitch deck
-    description: |
-      Create or update a company by uploading a pitch deck PDF or providing
-      a URL to an existing deck. The system will process and store the document.
-
-      **File Upload**: Use `multipart/form-data` with a `file` field.
-
-      **URL Upload**: Use `application/json` with a `url` field.
-    tags:
-      - Companies
-    requestBody:
-      required: true
-      content:
-        multipart/form-data:
-          schema:
-            type: object
-            properties:
-              file:
-                type: string
-                format: binary
-                description: PDF file to upload
-              company_data:
-                type: string
-                description: JSON-encoded company data
-              company_id:
-                type: string
-                format: uuid
-                description: Existing company ID to update (optional)
-        application/json:
-          schema:
-            type: object
-            required:
-              - url
-              - company_data
-            properties:
-              url:
-                type: string
-                format: uri
-                description: URL to fetch the deck from (DocSend, Google Drive, etc.)
-              email:
-                type: string
-                format: email
-                description: Email for password-protected links
-              passcode:
-                type: string
-                description: Passcode for protected links
-              company_data:
-                type: object
-                description: Company data to create/update
-              company_id:
-                type: string
-                format: uuid
-                description: Existing company ID to update
-    responses:
-      '200':
-        description: Company created/updated successfully
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CompanyResponse'
-      '400':
-        $ref: '#/components/responses/BadRequestError'
-      '401':
-        $ref: '#/components/responses/UnauthorizedError'
-      '500':
-        $ref: '#/components/responses/InternalServerError'
-
 /companies/{id}/analyze:
   post:
     operationId: analyzeCompany
     summary: Analyze pitch deck with AI
     description: |
       Use AI to analyze the company's pitch deck and extract structured data
-      including company information, team details, funding, and key insights.
+      including company information, founder details, and key insights.
+
+      The analysis populates:
+      - `metadata.founders` - Team member information
+      - `metadata.ai_analysis` - Brief company description
+      - `metadata.analyzed_at` - When analysis was performed
+      - `metadata.user_preferences` - Extracted custom field values
 
       **Note**: This operation consumes AI credits.
     tags:
@@ -366,246 +414,6 @@
       '500':
         $ref: '#/components/responses/InternalServerError'
 
-/companies/bulk-actions:
-  post:
-    operationId: bulkCompanyActions
-    summary: Perform bulk actions on companies
-    description: |
-      Perform bulk operations on multiple companies at once.
-      Supported actions:
-      - `update_status`: Update the deal flow status
-      - `update_source`: Update the source
-      - `delete`: Delete multiple companies
-    tags:
-      - Companies
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/BulkActionRequest'
-          examples:
-            updateStatus:
-              summary: Update status for multiple companies
-              value:
-                company_ids:
-                  - "uuid-1"
-                  - "uuid-2"
-                action: "update_status"
-                company_status_id: "status-uuid"
-            deleteCompanies:
-              summary: Delete multiple companies
-              value:
-                company_ids:
-                  - "uuid-1"
-                  - "uuid-2"
-                action: "delete"
-    responses:
-      '200':
-        description: Bulk action completed
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BulkActionResponse'
-      '400':
-        $ref: '#/components/responses/BadRequestError'
-      '401':
-        $ref: '#/components/responses/UnauthorizedError'
-      '500':
-        $ref: '#/components/responses/InternalServerError'
-
-/companies/duplicates:
-  get:
-    operationId: detectDuplicates
-    summary: Detect duplicate companies
-    description: |
-      Analyze your company database and identify potential duplicates
-      based on name similarity and other factors.
-    tags:
-      - Companies
-    parameters:
-      - name: threshold
-        in: query
-        required: false
-        description: Similarity threshold (0-1). Higher = stricter matching.
-        schema:
-          type: number
-          format: float
-          minimum: 0.5
-          maximum: 1.0
-          default: 0.8
-    responses:
-      '200':
-        description: Duplicates detected
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DuplicatesResponse'
-      '401':
-        $ref: '#/components/responses/UnauthorizedError'
-      '500':
-        $ref: '#/components/responses/InternalServerError'
-
-  post:
-    operationId: mergeDuplicates
-    summary: Merge duplicate companies
-    description: |
-      Merge multiple duplicate companies into one. The kept company will
-      inherit contacts, notes, and other associated data from merged companies.
-    tags:
-      - Companies
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/MergeDuplicatesRequest'
-    responses:
-      '200':
-        description: Companies merged successfully
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                success:
-                  type: boolean
-                data:
-                  type: object
-                  properties:
-                    kept_company:
-                      $ref: '#/components/schemas/Company'
-                    deleted_count:
-                      type: integer
-                    message:
-                      type: string
-      '400':
-        $ref: '#/components/responses/BadRequestError'
-      '401':
-        $ref: '#/components/responses/UnauthorizedError'
-      '500':
-        $ref: '#/components/responses/InternalServerError'
-
-/companies/{id}/shares:
-  get:
-    operationId: listCompanyShares
-    summary: List company shares
-    description: |
-      Get the list of users who have access to a shared company.
-      Only applicable for companies with `visibility: shared`.
-    tags:
-      - Companies
-    parameters:
-      - $ref: '#/components/parameters/CompanyIdParam'
-    responses:
-      '200':
-        description: List of shares
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                success:
-                  type: boolean
-                data:
-                  type: object
-                  properties:
-                    shares:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/CompanySharedAccess'
-      '401':
-        $ref: '#/components/responses/UnauthorizedError'
-      '404':
-        $ref: '#/components/responses/NotFoundError'
-
-  post:
-    operationId: addCompanyShare
-    summary: Share company with user
-    description: |
-      Grant a user access to a company. The company must have
-      `visibility: shared` for this to work.
-    tags:
-      - Companies
-    parameters:
-      - $ref: '#/components/parameters/CompanyIdParam'
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - user_id
-            properties:
-              user_id:
-                type: string
-                format: uuid
-                description: User ID to share with
-    responses:
-      '200':
-        description: Share added
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                success:
-                  type: boolean
-                data:
-                  type: object
-                  properties:
-                    share:
-                      $ref: '#/components/schemas/CompanySharedAccess'
-                    message:
-                      type: string
-      '400':
-        $ref: '#/components/responses/BadRequestError'
-      '401':
-        $ref: '#/components/responses/UnauthorizedError'
-      '404':
-        $ref: '#/components/responses/NotFoundError'
-
-  delete:
-    operationId: removeCompanyShare
-    summary: Remove company share
-    description: Revoke a user's access to a shared company.
-    tags:
-      - Companies
-    parameters:
-      - $ref: '#/components/parameters/CompanyIdParam'
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - user_id
-            properties:
-              user_id:
-                type: string
-                format: uuid
-    responses:
-      '200':
-        description: Share removed
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                success:
-                  type: boolean
-                data:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-      '401':
-        $ref: '#/components/responses/UnauthorizedError'
-      '404':
-        $ref: '#/components/responses/NotFoundError'
-
 /companies/{id}/attachments:
   post:
     operationId: uploadCompanyAttachment
@@ -660,43 +468,5 @@
         $ref: '#/components/responses/BadRequestError'
       '401':
         $ref: '#/components/responses/UnauthorizedError'
-      '500':
-        $ref: '#/components/responses/InternalServerError'
-
-/companies/{id}/enrich:
-  post:
-    operationId: enrichCompany
-    summary: Enrich company data
-    description: |
-      Use external data sources to enrich company information
-      (firmographics, funding history, news, etc.).
-
-      **Note**: This operation may consume enrichment credits.
-    tags:
-      - Companies
-    parameters:
-      - $ref: '#/components/parameters/CompanyIdParam'
-    responses:
-      '200':
-        description: Enrichment completed
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                success:
-                  type: boolean
-                data:
-                  type: object
-                  properties:
-                    company:
-                      $ref: '#/components/schemas/Company'
-                    enrichment_data:
-                      type: object
-                      description: Additional data from enrichment
-      '401':
-        $ref: '#/components/responses/UnauthorizedError'
-      '404':
-        $ref: '#/components/responses/NotFoundError'
       '500':
         $ref: '#/components/responses/InternalServerError'

@@ -3,13 +3,13 @@
   "theme": "mint",
   "name": "Roulette API",
   "colors": {
-    "primary": "#6366F1",
-    "light": "#818CF8",
-    "dark": "#4F46E5"
+    "primary": "#E7000B",
+    "light": "#FF3D47",
+    "dark": "#B8000A"
   },
   "favicon": "/favicon.svg",
   "api": {
-    "baseUrl": "https://app.useroulette.com/api/v1",
+    "baseUrl": "https://useroulette.com/api/v1",
     "auth": {
       "method": "bearer"
     },
@@ -50,7 +50,7 @@
       "anchors": [
         {
           "anchor": "Dashboard",
-          "href": "https://app.useroulette.com",
+          "href": "https://useroulette.com",
           "icon": "gauge"
         },
         {
@@ -62,8 +62,8 @@
     }
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/logo/light.png",
+    "dark": "/logo/dark.png"
   },
   "navbar": {
     "links": [
@@ -75,7 +75,7 @@
     "primary": {
       "type": "button",
       "label": "Get Started",
-      "href": "https://app.useroulette.com"
+      "href": "https://useroulette.com"
     }
   },
   "footer": {

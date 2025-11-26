@@ -29,7 +29,7 @@ InvestorDashboard:
       type: string
       format: uri
       description: Full URL for the investor dashboard
-      example: "https://app.useroulette.com/investor/inv-abc123"
+      example: "https://useroulette.com/investor/inv-abc123"
     shared_permissions:
       type: array
       items:

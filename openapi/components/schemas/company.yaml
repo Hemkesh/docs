@@ -12,45 +12,28 @@ Company:
       type: string
       format: uuid
       description: Unique identifier for the company
-      example: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+      example: "0bbd2344-7c60-4541-80ca-b3a5eb862e5c"
     account_id:
       type: string
       format: uuid
       description: Account/team this company belongs to
-      example: "550e8400-e29b-41d4-a716-446655440000"
+      example: "90d4ca07-8849-4fa9-b149-5f10d8635449"
     name:
       type: string
       description: Company name
-      example: "Acme Corp"
+      example: "Freya's Mirror"
       maxLength: 255
-    website:
-      type: string
-      format: uri
-      description: Company website URL
-      example: "https://acme.com"
-    description:
-      type: string
-      description: Brief description of the company
-      example: "AI-powered automation platform for enterprises"
     deck_link:
       type: string
       format: uri
-      description: URL to the pitch deck (if hosted externally)
-      example: "https://docsend.com/view/xyz123"
+      nullable: true
+      description: URL to the pitch deck (external link or Tally storage URL)
+      example: "https://storage.tally.so/private/Deck.pdf?id=J8DMJJ&accessToken=..."
     deck_storage_path:
       type: string
+      nullable: true
       description: Internal storage path for uploaded pitch deck
       example: "companies/7c9e6679/deck.pdf"
-    notes:
-      type: string
-      description: Internal notes about the company
-      example: "Met at TechCrunch Disrupt. Strong team background."
-    company_status_id:
-      type: string
-      format: uuid
-      nullable: true
-      description: Current deal flow status
-      example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
     visibility:
       type: string
       enum: [private, shared, team]
@@ -64,31 +47,211 @@ Company:
     source:
       type: string
       enum: [manual, email, form, referral, website, event, other]
+      nullable: true
       description: How the company was added to the pipeline
-      example: "email"
+      example: "form"
+    source_content:
+      type: string
+      nullable: true
+      description: |
+        Raw source content when company was created from a form submission.
+        Contains the original form field data in a serialized format.
+      example: "0: {\"key\":\"question_wbB2ze\",\"type\":\"INPUT_EMAIL\",\"label\":\"Email\",\"value\":\"founder@company.com\"}"
+    notes:
+      type: string
+      nullable: true
+      description: Internal notes about the company (not visible to the company)
+      example: "Company deck imported from direct PDF link"
+    company_status_id:
+      type: string
+      format: uuid
+      nullable: true
+      description: Current deal flow status ID
+      example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+    company_status:
+      nullable: true
+      description: Embedded company status object (when joined)
+      allOf:
+        - $ref: '#/components/schemas/CompanyStatus'
     metadata:
-      type: object
-      additionalProperties: true
-      description: Custom metadata fields
-      example:
-        industry: "SaaS"
-        stage: "Series A"
-        location: "San Francisco, CA"
+      $ref: '#/components/schemas/CompanyMetadata'
+    metadata_search_text:
+      type: string
+      nullable: true
+      description: Flattened metadata for full-text search (auto-generated)
+    assignees:
+      type: array
+      description: List of team members assigned to this company
+      items:
+        $ref: '#/components/schemas/Assignee'
+      default: []
     created_by:
       type: string
       format: uuid
-      description: User who created this company record
-      example: "user-uuid-here"
+      nullable: true
+      description: User ID who created this company record
+      example: "5e417c4b-ca57-4545-a995-a805a55e5b71"
+    updated_by:
+      type: string
+      format: uuid
+      nullable: true
+      description: User ID who last updated this company record
+      example: "5e417c4b-ca57-4545-a995-a805a55e5b71"
     created_at:
       type: string
       format: date-time
       description: When the company was created
-      example: "2024-01-15T10:30:00Z"
+      example: "2025-11-26T16:09:55.712555+00:00"
     updated_at:
       type: string
       format: date-time
       description: When the company was last updated
-      example: "2024-01-20T14:45:00Z"
+      example: "2025-11-26T16:10:35.14483+00:00"
+
+CompanyMetadata:
+  type: object
+  description: |
+    Custom metadata for the company. Contains AI-extracted data, founder info,
+    and user-configurable custom fields.
+  properties:
+    founders:
+      type: array
+      description: Founder/team member information (typically AI-extracted from pitch deck)
+      items:
+        $ref: '#/components/schemas/Founder'
+    ai_analysis:
+      type: string
+      nullable: true
+      description: AI-generated company description/summary
+      example: "Virtual try-on solution for fashion e-commerce to personalize customer experience and drive conversion."
+    analyzed_at:
+      type: string
+      format: date-time
+      nullable: true
+      description: When the AI analysis was performed
+      example: "2025-11-26T16:10:35.114Z"
+    user_preferences:
+      type: array
+      description: Custom fields configured by the account for tracking company data
+      items:
+        $ref: '#/components/schemas/UserPreference'
+  additionalProperties: true
+
+Founder:
+  type: object
+  description: Information about a company founder or team member
+  properties:
+    name:
+      type: string
+      description: Full name
+      example: "Fabian Jichi"
+    email:
+      type: string
+      format: email
+      nullable: true
+      description: Email address
+      example: "fabian@freyasmirror.ai"
+    phone:
+      type: string
+      nullable: true
+      description: Phone number
+      example: "+40727129962"
+    title:
+      type: string
+      nullable: true
+      description: Job title/role
+      example: "CEO/Founder"
+    background:
+      type: string
+      nullable: true
+      description: Professional background summary
+      example: "2nd time Startup Founder, ex Lead AI Engineer, 7 years experience in AI"
+    linkedin_profile:
+      type: string
+      format: uri
+      nullable: true
+      description: LinkedIn profile URL
+      example: "https://www.linkedin.com/in/fabian-jichi/"
+
+UserPreference:
+  type: object
+  description: |
+    Custom field for tracking company data. Supports multiple field types:
+    - `text`: Free-form text input
+    - `boolean`: True/false toggle
+    - `select`: Single selection from predefined options
+  required:
+    - type
+    - field
+  properties:
+    type:
+      type: string
+      enum: [text, boolean, select]
+      description: Field type
+      example: "select"
+    field:
+      type: string
+      description: Field name/label
+      example: "Industry"
+    value:
+      oneOf:
+        - type: string
+        - type: boolean
+        - type: "null"
+      description: Current value (type depends on field type)
+      example: "AI/ML"
+    options:
+      type: array
+      items:
+        type: string
+      description: Available options (for select fields)
+      example: ["SaaS", "Fintech", "AI/ML", "Developer Tools"]
+    show_in_table:
+      type: boolean
+      description: Whether this field is displayed in the companies table view
+      default: false
+      example: true
+
+Assignee:
+  type: object
+  description: Team member assigned to a company
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: User ID of the assignee
+    name:
+      type: string
+      nullable: true
+      description: Display name
+    email:
+      type: string
+      format: email
+      nullable: true
+      description: Email address
+    picture_url:
+      type: string
+      format: uri
+      nullable: true
+      description: Profile picture URL
+
+CompanyStatus:
+  type: object
+  description: Deal flow pipeline status
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+      example: "Initial Review"
+    color:
+      type: string
+      description: Hex color code
+      example: "#3B82F6"
+    rank:
+      type: integer
+      description: Order in pipeline (lower = earlier)
 
 CompanyCreate:
   type: object
@@ -103,13 +266,6 @@ CompanyCreate:
       type: string
       description: Company name
       maxLength: 255
-    website:
-      type: string
-      format: uri
-      description: Company website URL
-    description:
-      type: string
-      description: Brief description
     deck_link:
       type: string
       format: uri
@@ -131,8 +287,7 @@ CompanyCreate:
       enum: [manual, email, form, referral, website, event, other]
       default: manual
     metadata:
-      type: object
-      additionalProperties: true
+      $ref: '#/components/schemas/CompanyMetadata'
 
 CompanyUpdate:
   type: object
@@ -141,16 +296,13 @@ CompanyUpdate:
     name:
       type: string
       maxLength: 255
-    website:
-      type: string
-      format: uri
-    description:
-      type: string
     deck_link:
       type: string
       format: uri
+      nullable: true
     notes:
       type: string
+      nullable: true
     company_status_id:
       type: string
       format: uuid
@@ -162,8 +314,7 @@ CompanyUpdate:
       type: string
       enum: [manual, email, form, referral, website, event, other]
     metadata:
-      type: object
-      additionalProperties: true
+      $ref: '#/components/schemas/CompanyMetadata'
 
 CompanyListResponse:
   type: object
@@ -185,10 +336,11 @@ CompanyListResponse:
           items:
             $ref: '#/components/schemas/Company'
         pagination:
-          $ref: '#/components/schemas/Pagination'
+          $ref: '#/components/schemas/CursorPagination'
     authType:
       type: string
-      enum: [api_key, session, jwt]
+      enum: [api_key, session]
+      description: Authentication method used for this request
 
 CompanyResponse:
   type: object
@@ -212,27 +364,35 @@ CompanyResponse:
           description: Signed URL for downloading the pitch deck PDF (if requested)
     authType:
       type: string
-      enum: [api_key, session, jwt]
+      enum: [api_key, session]
 
-CompanySharedAccess:
+CursorPagination:
   type: object
+  description: |
+    Cursor-based pagination for optimal performance.
+    Does not include total counts to avoid expensive database queries.
   required:
-    - id
-    - company_id
-    - user_id
+    - page
+    - limit
+    - has_next
+    - has_prev
   properties:
-    id:
-      type: string
-      format: uuid
-    company_id:
-      type: string
-      format: uuid
-    user_id:
-      type: string
-      format: uuid
-    created_at:
-      type: string
-      format: date-time
+    page:
+      type: integer
+      description: Current page number
+      example: 1
+    limit:
+      type: integer
+      description: Number of items per page
+      example: 25
+    has_next:
+      type: boolean
+      description: Whether there are more results after this page
+      example: true
+    has_prev:
+      type: boolean
+      description: Whether there are results before this page
+      example: false
 
 CompanyAttachment:
   type: object
@@ -253,6 +413,7 @@ CompanyAttachment:
       example: "Financial Projections"
     description:
       type: string
+      nullable: true
       example: "Q4 2024 financial projections spreadsheet"
     storage_path:
       type: string
@@ -269,109 +430,6 @@ CompanyAttachment:
       type: string
       format: date-time
 
-BulkActionRequest:
-  type: object
-  required:
-    - company_ids
-    - action
-  properties:
-    company_ids:
-      type: array
-      items:
-        type: string
-        format: uuid
-      minItems: 1
-      maxItems: 100
-      description: List of company IDs to perform the action on
-    action:
-      type: string
-      enum: [update_status, update_source, delete]
-      description: The bulk action to perform
-    company_status_id:
-      type: string
-      format: uuid
-      description: Required when action is 'update_status'
-    source:
-      type: string
-      enum: [manual, email, form, referral, website, event, other]
-      description: Required when action is 'update_source'
-
-BulkActionResponse:
-  type: object
-  required:
-    - success
-    - data
-  properties:
-    success:
-      type: boolean
-      example: true
-    data:
-      type: object
-      properties:
-        updated_count:
-          type: integer
-          description: Number of companies affected
-          example: 5
-        message:
-          type: string
-          example: "Successfully updated 5 companies"
-
-DuplicateGroup:
-  type: object
-  properties:
-    companies:
-      type: array
-      items:
-        $ref: '#/components/schemas/Company'
-    similarity_score:
-      type: number
-      format: float
-      minimum: 0
-      maximum: 1
-      description: How similar the companies are (0-1)
-      example: 0.95
-
-DuplicatesResponse:
-  type: object
-  required:
-    - success
-    - data
-  properties:
-    success:
-      type: boolean
-    data:
-      type: object
-      properties:
-        duplicate_groups:
-          type: array
-          items:
-            $ref: '#/components/schemas/DuplicateGroup'
-        total_duplicates:
-          type: integer
-        total_companies_affected:
-          type: integer
-
-MergeDuplicatesRequest:
-  type: object
-  required:
-    - keep_company_id
-    - delete_company_ids
-  properties:
-    keep_company_id:
-      type: string
-      format: uuid
-      description: The company to keep (others will be merged into this)
-    delete_company_ids:
-      type: array
-      items:
-        type: string
-        format: uuid
-      description: Companies to merge and delete
-    merge_metadata:
-      type: boolean
-      default: true
-      description: Whether to merge metadata from deleted companies
-
 AnalyzeResponse:
   type: object
   required:
@@ -383,39 +441,214 @@ AnalyzeResponse:
     data:
       type: object
       properties:
-        company_name:
-          type: string
-        description:
-          type: string
-        industry:
-          type: string
-        stage:
-          type: string
-        location:
-          type: string
-        team:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-              role:
-                type: string
-              linkedin:
-                type: string
-        funding:
+        company:
+          $ref: '#/components/schemas/Company'
+          description: Updated company with AI-extracted metadata
+        analysis:
           type: object
+          description: Raw analysis results
           properties:
-            amount_raised:
+            founders:
+              type: array
+              items:
+                $ref: '#/components/schemas/Founder'
+            ai_analysis:
               type: string
-            target_raise:
-              type: string
-        insights:
+              description: AI-generated company summary
+            user_preferences:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserPreference'
+              description: Extracted custom field values
+
+# AI Upload Schemas
+
+AiUploadRequest:
+  type: object
+  required:
+    - text
+    - account_id
+  properties:
+    text:
+      type: string
+      minLength: 1
+      description: |
+        Unstructured text content to process. Can include:
+        - Full email body (with headers)
+        - Form submission data
+        - Meeting notes
+        - URLs to pitch decks (DocSend, Google Drive, etc.)
+
+        The AI will extract URLs and analyze context to determine
+        company status and source automatically.
+      example: |
+        From: founder@startup.com
+        Subject: TechCo - Series A Deck
+
+        Hi, here's our pitch deck: https://docsend.com/view/abc123
+
+        We're raising $5M at a $20M pre-money valuation.
+    account_id:
+      type: string
+      format: uuid
+      description: Account/team ID to create the company under
+    name:
+      type: string
+      description: |
+        Optional company name override. If not provided, the AI
+        will attempt to extract it from the text or deck.
+    visibility:
+      type: string
+      enum: [private, shared, team]
+      default: team
+      description: Visibility level for the new company
+    notes:
+      type: string
+      description: Optional internal notes
+    company_status_id:
+      type: string
+      format: uuid
+      description: |
+        Optional status override. If not provided, the AI will
+        attempt to detect an appropriate status from the content.
+    source:
+      type: string
+      enum: [manual, email, form, referral, website, event, other]
+      description: |
+        Optional source override. If not provided, the AI will
+        attempt to detect the source from content context.
+    metadata:
+      type: object
+      additionalProperties: true
+      description: Optional custom metadata to merge with AI-extracted data
+    file_0:
+      type: string
+      format: binary
+      description: First file attachment (pitch deck or supporting document)
+    file_1:
+      type: string
+      format: binary
+      description: Second file attachment
+    file_2:
+      type: string
+      format: binary
+      description: Third file attachment
+    file_3:
+      type: string
+      format: binary
+      description: Fourth file attachment (up to 10 files supported via file_N pattern)
+
+AiUploadResponse:
+  type: object
+  required:
+    - success
+    - data
+  properties:
+    success:
+      type: boolean
+      example: true
+    data:
+      type: object
+      required:
+        - company
+        - attachments
+        - analysis
+      properties:
+        company:
+          $ref: '#/components/schemas/Company'
+          description: The newly created company
+        pdfDownloadUrl:
+          type: string
+          format: uri
+          description: |
+            Signed URL for downloading the pitch deck PDF.
+            Only present if a deck was successfully processed and stored.
+        attachments:
           type: array
+          description: List of additional files uploaded as attachments
           items:
-            type: string
-        confidence:
-          type: number
-          format: float
-          description: AI confidence score (0-1)
+            $ref: '#/components/schemas/UploadedAttachment'
+        analysis:
+          $ref: '#/components/schemas/AiAnalysisResult'
+    authType:
+      type: string
+      enum: [api_key, session]
+
+UploadedAttachment:
+  type: object
+  description: An attachment uploaded during AI company creation
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Attachment UUID
+    title:
+      type: string
+      description: File name/title
+      example: "Financial Model.xlsx"
+    filePath:
+      type: string
+      description: Storage path for the file
+      example: "companies/7c9e6679/attachments/financial-model.xlsx"
+    attachmentType:
+      type: string
+      description: MIME type of the file
+      example: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+AiAnalysisResult:
+  type: object
+  description: Details about the AI processing that occurred
+  properties:
+    detectedUrls:
+      type: array
+      items:
+        type: string
+        format: uri
+      description: |
+        All URLs extracted from the text content using regex.
+        Includes signed URLs, short links, and deck platform URLs.
+      example:
+        - "https://docsend.com/view/abc123"
+        - "https://drive.google.com/file/d/xyz"
+    selectedDeckUrl:
+      type: string
+      format: uri
+      description: |
+        The URL that was selected as the primary pitch deck source.
+        Only present if a URL was used (vs. uploaded file).
+      example: "https://docsend.com/view/abc123"
+    selectedDeckFile:
+      type: string
+      description: |
+        Name of the file that was selected as the primary pitch deck.
+        Only present if an uploaded file was used (vs. URL).
+      example: "Pitch Deck v2.pdf"
+    aiReasoning:
+      type: string
+      description: |
+        Explanation of why the AI selected the particular deck source.
+        Useful for debugging and understanding the selection logic.
+      example: "Selected DocSend URL as primary deck source (high priority platform)"
+    contextAnalysis:
+      type: object
+      description: Results of AI context analysis on the text content
+      properties:
+        statusDetected:
+          type: boolean
+          description: Whether a company status was auto-detected
+        statusReasoning:
+          type: string
+          description: Explanation for the detected status
+          example: "Email mentions 'Series A raise' - assigned to fundraising stage"
+        sourceDetected:
+          type: boolean
+          description: Whether a source was auto-detected
+        sourceReasoning:
+          type: string
+          description: Explanation for the detected source
+          example: "Content appears to be a forwarded email from founder"
+    processedAt:
+      type: string
+      format: date-time
+      description: When the AI processing completed
+      example: "2024-01-15T10:30:00Z"

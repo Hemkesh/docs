@@ -12,7 +12,7 @@ Roulette provides multiple ways to share your deal flow data with LPs, co-invest
 Create secure, shareable links to give external parties access to selected companies:
 
 ```bash
-curl -X POST "https://app.useroulette.com/api/v1/accounts/{account_id}/shared-links" \
+curl -X POST "https://useroulette.com/api/v1/accounts/{account_id}/shared-links" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -57,7 +57,7 @@ Create a dedicated dashboard for your LPs to view portfolio performance:
 
 ```bash
 # Create an investor dashboard
-curl -X POST "https://app.useroulette.com/api/v1/accounts/{account_id}/investor-dashboard" \
+curl -X POST "https://useroulette.com/api/v1/accounts/{account_id}/investor-dashboard" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -86,7 +86,7 @@ Connect external forms to automatically create companies in your pipeline.
 2. Configure the Tally integration in Roulette:
 
 ```bash
-curl -X POST "https://app.useroulette.com/api/v1/accounts/{account_id}/integrations" \
+curl -X POST "https://useroulette.com/api/v1/accounts/{account_id}/integrations" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -97,7 +97,7 @@ curl -X POST "https://app.useroulette.com/api/v1/accounts/{account_id}/integrati
 
 3. Set your Tally webhook URL to:
    ```
-   https://app.useroulette.com/api/v1/accounts/{account_id}/form-submissions/tally
+   https://useroulette.com/api/v1/accounts/{account_id}/form-submissions/tally
    ```
 
 ### Form Submission Flow
@@ -122,7 +122,7 @@ curl -X POST "https://app.useroulette.com/api/v1/accounts/{account_id}/integrati
 Manually convert a form submission to a company:
 
 ```bash
-curl -X POST "https://app.useroulette.com/api/v1/accounts/{account_id}/form-submissions/{submission_id}/convert" \
+curl -X POST "https://useroulette.com/api/v1/accounts/{account_id}/form-submissions/{submission_id}/convert" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -135,7 +135,7 @@ curl -X POST "https://app.useroulette.com/api/v1/accounts/{account_id}/form-subm
 Create trackable short URLs for pitch deck links:
 
 ```bash
-curl -X POST "https://app.useroulette.com/api/v1/short-urls" \
+curl -X POST "https://useroulette.com/api/v1/short-urls" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -151,7 +151,7 @@ Response:
   "success": true,
   "data": {
     "short_code": "abc12xyz",
-    "short_url": "https://app.useroulette.com/r/abc12xyz",
+    "short_url": "https://useroulette.com/r/abc12xyz",
     "password": "auto-generated-password"
   }
 }
@@ -163,7 +163,7 @@ All shared content access is logged for security and analytics:
 
 ```bash
 # Get access logs for a shared link
-curl -X GET "https://app.useroulette.com/api/v1/accounts/{account_id}/shared-links/{link_id}/access-logs" \
+curl -X GET "https://useroulette.com/api/v1/accounts/{account_id}/shared-links/{link_id}/access-logs" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
