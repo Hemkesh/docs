@@ -7,7 +7,7 @@
     "light": "#FF3D47",
     "dark": "#B8000A"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/favicon.png",
   "api": {
     "baseUrl": "https://www.useroulette.com/api/v1",
     "auth": {
