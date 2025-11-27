@@ -69,16 +69,16 @@ info:
     - `404` Not Found - Resource not found
     - `429` Too Many Requests - Rate limit exceeded
     - `500` Internal Server Error - Server-side error
-  termsOfService: https://useroulette.com/terms
+  termsOfService: https://www.useroulette.com/terms
   contact:
     name: Roulette API Support
     email: support@useroulette.com
-    url: https://useroulette.com/support
+    url: https://www.useroulette.com/support
   license:
     name: Proprietary
-    url: https://useroulette.com/license
+    url: https://www.useroulette.com/license
 servers:
-  - url: https://useroulette.com/api/v1
+  - url: https://www.useroulette.com/api/v1
     description: Production server
   - url: http://localhost:3000/api/v1
     description: Local development server
@@ -1868,7 +1868,7 @@ paths:
         Tally forms can send webhooks to Roulette when submissions are received.
         Provide the signing secret from your Tally webhook settings.
 
-        Webhook URL: `https://useroulette.com/api/v1/accounts/{account_id}/form-submissions/tally`
+        Webhook URL: `https://www.useroulette.com/api/v1/accounts/{account_id}/form-submissions/tally`
 
         ## Specter Integration
 
@@ -2108,7 +2108,7 @@ paths:
                     is_active: true
                     password_protected: true
                     short_code: inv-abc123
-                    dashboard_url: https://useroulette.com/investor/inv-abc123
+                    dashboard_url: https://www.useroulette.com/investor/inv-abc123
                     shared_permissions:
                       - view_portfolio
                       - view_metrics
@@ -2570,7 +2570,7 @@ paths:
                       account_id: account-uuid
                       name: Q1 2024 Portfolio
                       short_code: abc123xy
-                      short_url: https://useroulette.com/s/abc123xy
+                      short_url: https://www.useroulette.com/s/abc123xy
                       password_protected: true
                       is_active: true
                       view_count: 42
@@ -2633,7 +2633,7 @@ paths:
                   link:
                     id: new-link-uuid
                     short_code: xyz789ab
-                    short_url: https://useroulette.com/s/xyz789ab
+                    short_url: https://www.useroulette.com/s/xyz789ab
         '400':
           $ref: '#/components/responses/BadRequestError'
         '401':
@@ -2922,7 +2922,7 @@ paths:
                         type: string
                         format: uri
                         description: Full shortened URL
-                        example: https://useroulette.com/r/abc12xyz
+                        example: https://www.useroulette.com/r/abc12xyz
                       password:
                         type: string
                         nullable: true
@@ -2937,7 +2937,7 @@ paths:
                 success: true
                 data:
                   short_code: abc12xyz
-                  short_url: https://useroulette.com/r/abc12xyz
+                  short_url: https://www.useroulette.com/r/abc12xyz
                   password: auto-gen-pass123
                   expires_at: null
         '400':
@@ -4356,7 +4356,7 @@ components:
           type: string
           format: uri
           description: Full URL for the investor dashboard
-          example: https://useroulette.com/investor/inv-abc123
+          example: https://www.useroulette.com/investor/inv-abc123
         shared_permissions:
           type: array
           items:
@@ -4691,7 +4691,7 @@ components:
           type: string
           format: uri
           description: Full shareable URL
-          example: https://useroulette.com/s/abc123xy
+          example: https://www.useroulette.com/s/abc123xy
         password_protected:
           type: boolean
           description: Whether a password is required to access

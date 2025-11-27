@@ -9,7 +9,7 @@
   },
   "favicon": "/favicon.svg",
   "api": {
-    "baseUrl": "https://useroulette.com/api/v1",
+    "baseUrl": "https://www.useroulette.com/api/v1",
     "auth": {
       "method": "bearer"
     },
@@ -75,12 +75,12 @@
     "primary": {
       "type": "button",
       "label": "Get Started",
-      "href": "https://useroulette.com"
+      "href": "https://www.useroulette.com"
     }
   },
   "footer": {
     "socials": {
-      "website": "https://useroulette.com",
+      "website": "https://www.useroulette.com",
       "linkedin": "https://linkedin.com/company/useroulette"
     }
   }

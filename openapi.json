@@ -4,20 +4,20 @@
     "title": "Roulette API",
     "version": "1.0.0",
     "description": "The Roulette API provides programmatic access to manage your VC deal flow,\ncompanies, contacts, and related data.\n\n## Authentication\n\nAll API requests require authentication using a Bearer token. Include your API key\nin the `Authorization` header:\n\n```\nAuthorization: Bearer YOUR_API_KEY\n```\n\nYou can generate API keys from your account settings in the Roulette dashboard.\n\n## Rate Limiting\n\nAPI requests are rate limited to ensure fair usage. Current limits:\n- 1000 requests per minute per API key\n- 100 requests per second per API key\n\nRate limit headers are included in all responses:\n- `X-RateLimit-Limit`: Maximum requests per window\n- `X-RateLimit-Remaining`: Requests remaining in current window\n- `X-RateLimit-Reset`: Unix timestamp when the window resets\n\n## Pagination\n\nList endpoints support cursor-based pagination using the following query parameters:\n- `page`: Page number (default: 1)\n- `limit`: Items per page (default: 25, max: 100)\n\nPaginated responses include pagination metadata:\n```json\n{\n  \"data\": [...],\n  \"pagination\": {\n    \"page\": 1,\n    \"limit\": 25,\n    \"has_next\": true,\n    \"has_prev\": false\n  }\n}\n```\n\n**Note**: For performance reasons, total counts (`total`, `total_pages`) are not included.\nUse `has_next` and `has_prev` to determine if more pages exist.\n\n## Errors\n\nThe API uses standard HTTP status codes and returns errors in a consistent format:\n\n```json\n{\n  \"success\": false,\n  \"error\": \"Human readable error message\",\n  \"data\": null\n}\n```\n\nCommon status codes:\n- `400` Bad Request - Invalid parameters or request body\n- `401` Unauthorized - Missing or invalid API key\n- `403` Forbidden - Valid API key but insufficient permissions\n- `404` Not Found - Resource not found\n- `429` Too Many Requests - Rate limit exceeded\n- `500` Internal Server Error - Server-side error\n",
-    "termsOfService": "https://useroulette.com/terms",
+    "termsOfService": "https://www.useroulette.com/terms",
     "contact": {
       "name": "Roulette API Support",
       "email": "support@useroulette.com",
-      "url": "https://useroulette.com/support"
+      "url": "https://www.useroulette.com/support"
     },
     "license": {
       "name": "Proprietary",
-      "url": "https://useroulette.com/license"
+      "url": "https://www.useroulette.com/license"
     }
   },
   "servers": [
     {
-      "url": "https://useroulette.com/api/v1",
+      "url": "https://www.useroulette.com/api/v1",
       "description": "Production server"
     },
     {
@@ -2584,7 +2584,7 @@
       "post": {
         "operationId": "createIntegration",
         "summary": "Create or update an integration",
-        "description": "Configure a new integration or update an existing one.\nIf an integration of the specified type already exists, it will be updated.\n\n## Tally Integration\n\nTally forms can send webhooks to Roulette when submissions are received.\nProvide the signing secret from your Tally webhook settings.\n\nWebhook URL: `https://useroulette.com/api/v1/accounts/{account_id}/form-submissions/tally`\n\n## Specter Integration\n\nConnect to Specter for additional data enrichment.\nProvide your Specter API key.\n",
+        "description": "Configure a new integration or update an existing one.\nIf an integration of the specified type already exists, it will be updated.\n\n## Tally Integration\n\nTally forms can send webhooks to Roulette when submissions are received.\nProvide the signing secret from your Tally webhook settings.\n\nWebhook URL: `https://www.useroulette.com/api/v1/accounts/{account_id}/form-submissions/tally`\n\n## Specter Integration\n\nConnect to Specter for additional data enrichment.\nProvide your Specter API key.\n",
         "tags": [
           "Integrations"
         ],
@@ -2936,7 +2936,7 @@
                       "is_active": true,
                       "password_protected": true,
                       "short_code": "inv-abc123",
-                      "dashboard_url": "https://useroulette.com/investor/inv-abc123",
+                      "dashboard_url": "https://www.useroulette.com/investor/inv-abc123",
                       "shared_permissions": [
                         "view_portfolio",
                         "view_metrics"
@@ -3636,7 +3636,7 @@
                         "account_id": "account-uuid",
                         "name": "Q1 2024 Portfolio",
                         "short_code": "abc123xy",
-                        "short_url": "https://useroulette.com/s/abc123xy",
+                        "short_url": "https://www.useroulette.com/s/abc123xy",
                         "password_protected": true,
                         "is_active": true,
                         "view_count": 42,
@@ -3731,7 +3731,7 @@
                     "link": {
                       "id": "new-link-uuid",
                       "short_code": "xyz789ab",
-                      "short_url": "https://useroulette.com/s/xyz789ab"
+                      "short_url": "https://www.useroulette.com/s/xyz789ab"
                     }
                   }
                 }
@@ -4153,7 +4153,7 @@
                           "type": "string",
                           "format": "uri",
                           "description": "Full shortened URL",
-                          "example": "https://useroulette.com/r/abc12xyz"
+                          "example": "https://www.useroulette.com/r/abc12xyz"
                         },
                         "password": {
                           "type": "string",
@@ -4173,7 +4173,7 @@
                   "success": true,
                   "data": {
                     "short_code": "abc12xyz",
-                    "short_url": "https://useroulette.com/r/abc12xyz",
+                    "short_url": "https://www.useroulette.com/r/abc12xyz",
                     "password": "auto-gen-pass123",
                     "expires_at": null
                   }
@@ -6040,7 +6040,7 @@
             "type": "string",
             "format": "uri",
             "description": "Full URL for the investor dashboard",
-            "example": "https://useroulette.com/investor/inv-abc123"
+            "example": "https://www.useroulette.com/investor/inv-abc123"
           },
           "shared_permissions": {
             "type": "array",
@@ -6478,7 +6478,7 @@
             "type": "string",
             "format": "uri",
             "description": "Full shareable URL",
-            "example": "https://useroulette.com/s/abc123xy"
+            "example": "https://www.useroulette.com/s/abc123xy"
           },
           "password_protected": {
             "type": "boolean",

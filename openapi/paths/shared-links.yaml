@@ -42,7 +42,7 @@
                     account_id: "account-uuid"
                     name: "Q1 2024 Portfolio"
                     short_code: "abc123xy"
-                    short_url: "https://useroulette.com/s/abc123xy"
+                    short_url: "https://www.useroulette.com/s/abc123xy"
                     password_protected: true
                     is_active: true
                     view_count: 42
@@ -106,7 +106,7 @@
                 link:
                   id: "new-link-uuid"
                   short_code: "xyz789ab"
-                  short_url: "https://useroulette.com/s/xyz789ab"
+                  short_url: "https://www.useroulette.com/s/xyz789ab"
       '400':
         $ref: '#/components/responses/BadRequestError'
       '401':

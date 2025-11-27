@@ -70,17 +70,17 @@ info:
     - `429` Too Many Requests - Rate limit exceeded
     - `500` Internal Server Error - Server-side error
 
-  termsOfService: https://useroulette.com/terms
+  termsOfService: https://www.useroulette.com/terms
   contact:
     name: Roulette API Support
     email: support@useroulette.com
-    url: https://useroulette.com/support
+    url: https://www.useroulette.com/support
   license:
     name: Proprietary
-    url: https://useroulette.com/license
+    url: https://www.useroulette.com/license
 
 servers:
-  - url: https://useroulette.com/api/v1
+  - url: https://www.useroulette.com/api/v1
     description: Production server
   - url: http://localhost:3000/api/v1
     description: Local development server

@@ -31,7 +31,7 @@ SharedLink:
       type: string
       format: uri
       description: Full shareable URL
-      example: "https://useroulette.com/s/abc123xy"
+      example: "https://www.useroulette.com/s/abc123xy"
     password_protected:
       type: boolean
       description: Whether a password is required to access

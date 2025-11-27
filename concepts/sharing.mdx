@@ -28,7 +28,7 @@ Each company can have one of three visibility settings:
 When creating a company via the AI upload endpoint:
 
 ```bash
-curl -X POST "https://useroulette.com/api/v1/companies/upload/ai" \
+curl -X POST "https://www.useroulette.com/api/v1/companies/upload/ai" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -F "account_id=YOUR_ACCOUNT_ID" \
   -F "text=Company info here" \
@@ -39,7 +39,7 @@ curl -X POST "https://useroulette.com/api/v1/companies/upload/ai" \
 Or update an existing company:
 
 ```bash
-curl -X PATCH "https://useroulette.com/api/v1/companies/{company_id}" \
+curl -X PATCH "https://www.useroulette.com/api/v1/companies/{company_id}" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -52,7 +52,7 @@ curl -X PATCH "https://useroulette.com/api/v1/companies/{company_id}" \
 List companies with a specific visibility level:
 
 ```bash
-curl -X GET "https://useroulette.com/api/v1/companies?visibility=private" \
+curl -X GET "https://www.useroulette.com/api/v1/companies?visibility=private" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
