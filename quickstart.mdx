@@ -1,6 +1,6 @@
 ---
 title: "Quickstart"
-description: "Get started with the Roulette API in under 5 minutes"
+description: "Start making API requests in under 5 minutes"
 ---
 
 ## Get your API key
@@ -10,7 +10,7 @@ description: "Get started with the Roulette API in under 5 minutes"
     Go to [useroulette.com](https://www.useroulette.com/home) and sign in to your account.
   </Step>
   <Step title="Navigate to Settings">
-    Click on your profile menu and select **Settings** → **API Keys**.
+    Click on your team name in the sidebar, then select **Settings** → **API Keys**.
   </Step>
   <Step title="Generate a new key">
     Click **Create API Key**, give it a name (e.g., "Development"), and copy the generated key.
@@ -21,27 +21,24 @@ description: "Get started with the Roulette API in under 5 minutes"
 
 ## Make your first request
 
-Let's list the companies in your pipeline:
+Fetch companies from your deal pipeline:
 
 <CodeGroup>
 
 ```bash cURL
 curl -X GET "https://www.useroulette.com/api/v1/companies" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json"
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 ```javascript JavaScript
 const response = await fetch('https://www.useroulette.com/api/v1/companies', {
-  method: 'GET',
   headers: {
-    'Authorization': 'Bearer YOUR_API_KEY',
-    'Content-Type': 'application/json'
+    'Authorization': 'Bearer YOUR_API_KEY'
   }
 });
 
 const data = await response.json();
-console.log(data);
+console.log(data.data.companies);
 ```
 
 ```python Python
@@ -49,10 +46,7 @@ import requests
 
 response = requests.get(
     'https://www.useroulette.com/api/v1/companies',
-    headers={
-        'Authorization': 'Bearer YOUR_API_KEY',
-        'Content-Type': 'application/json'
-    }
+    headers={'Authorization': 'Bearer YOUR_API_KEY'}
 )
 
 print(response.json())
@@ -69,24 +63,18 @@ You'll receive a response like this:
     "companies": [
       {
         "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
-        "account_id": "550e8400-e29b-41d4-a716-446655440000",
         "name": "Acme Corp",
         "deck_link": "https://docsend.com/view/example",
-        "visibility": "team",
         "source": "email",
-        "company_status_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-        "notes": "Met at Demo Day 2024",
-        "created_at": "2024-01-15T10:30:00Z",
-        "updated_at": "2024-01-15T10:30:00Z",
+        "company_status": {
+          "status_text": "Initial Review",
+          "color": "#3B82F6"
+        },
         "metadata": {
           "ai_analysis": "B2B SaaS for workflow automation",
-          "founders": []
-        },
-        "company_status": {
-          "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-          "status_text": "Initial Review",
-          "color": "#3B82F6",
-          "rank": 1
+          "founders": [
+            { "name": "Jane Smith", "title": "CEO" }
+          ]
         }
       }
     ],
@@ -96,15 +84,13 @@ You'll receive a response like this:
       "has_next": true,
       "has_prev": false
     }
-  },
-  "authType": "api_key"
+  }
 }
 ```
 
-## Create a company
+## Add a company with AI
 
-The recommended way to create companies is using the intelligent AI upload endpoint.
-It can process emails, form submissions, or any text containing pitch deck URLs:
+The fastest way to add deals is the AI upload endpoint. Paste an email, a DocSend link, or any text - the AI extracts everything automatically:
 
 <CodeGroup>
 
@@ -112,36 +98,31 @@ It can process emails, form submissions, or any text containing pitch deck URLs:
 curl -X POST "https://www.useroulette.com/api/v1/companies/upload/ai" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -F "account_id=YOUR_ACCOUNT_ID" \
-  -F "text=From: founder@startup.com
-Subject: TechStartup Series A
+  -F "text=Hey, wanted to share our deck: https://docsend.com/view/abc123
 
-Hi, here's our pitch deck: https://docsend.com/view/example123
+We're building AI tools for sales teams. Currently at $50k MRR.
 
-We're raising a $5M Series A." \
-  -F "name=TechStartup Inc"
+Best,
+Jane Smith
+CEO, TechStartup"
 ```
 
 ```javascript JavaScript
 const formData = new FormData();
 formData.append('account_id', 'YOUR_ACCOUNT_ID');
-formData.append('text', `From: founder@startup.com
-Subject: TechStartup Series A
+formData.append('text', `Hey, wanted to share our deck: https://docsend.com/view/abc123
 
-Hi, here's our pitch deck: https://docsend.com/view/example123
+We're building AI tools for sales teams. Currently at $50k MRR.
 
-We're raising a $5M Series A.`);
-formData.append('name', 'TechStartup Inc');
+Best,
+Jane Smith
+CEO, TechStartup`);
 
 const response = await fetch('https://www.useroulette.com/api/v1/companies/upload/ai', {
   method: 'POST',
-  headers: {
-    'Authorization': 'Bearer YOUR_API_KEY'
-  },
+  headers: { 'Authorization': 'Bearer YOUR_API_KEY' },
   body: formData
 });
-
-const data = await response.json();
-console.log(data);
 ```
 
 ```python Python
@@ -149,50 +130,60 @@ import requests
 
 response = requests.post(
     'https://www.useroulette.com/api/v1/companies/upload/ai',
-    headers={
-        'Authorization': 'Bearer YOUR_API_KEY'
-    },
+    headers={'Authorization': 'Bearer YOUR_API_KEY'},
     data={
         'account_id': 'YOUR_ACCOUNT_ID',
-        'text': '''From: founder@startup.com
-Subject: TechStartup Series A
+        'text': '''Hey, wanted to share our deck: https://docsend.com/view/abc123
 
-Hi, here's our pitch deck: https://docsend.com/view/example123
+We're building AI tools for sales teams. Currently at $50k MRR.
 
-We're raising a $5M Series A.''',
-        'name': 'TechStartup Inc'
+Best,
+Jane Smith
+CEO, TechStartup'''
     }
 )
-
-print(response.json())
 ```
 
 </CodeGroup>
 
-The AI endpoint automatically:
-- Extracts pitch deck URLs from the text
-- Downloads and stores the deck
-- Detects the company source (email, form, referral, etc.)
-- Suggests an appropriate pipeline status
+The AI automatically:
+- Extracts the DocSend URL and downloads the deck
+- Detects this came from an email (sets `source: "email"`)
+- Creates the company record with the extracted name
 
 <Tip>
-  You can find your `account_id` in the URL when viewing your dashboard:
-  `useroulette.com/home/{account_id}/...`
+  Find your `account_id` in your dashboard URL: `useroulette.com/home/{account_id}/...`
 </Tip>
+
+## Analyze a pitch deck
+
+Already have a company in your pipeline? Use AI to extract structured data from the deck:
+
+```bash
+curl -X POST "https://www.useroulette.com/api/v1/companies/{company_id}/analyze" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json"
+```
+
+This populates `metadata.founders`, `metadata.ai_analysis`, and your custom fields.
+
+<Note>
+  AI operations (upload/ai and analyze) consume credits from your account. You receive 500 credits/month with your subscription.
+</Note>
 
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Authentication" icon="key" href="/authentication">
-    Learn more about API authentication
-  </Card>
   <Card title="Companies API" icon="building" href="/api-reference/companies/list">
-    Explore all company endpoints
+    Full CRUD operations for your pipeline
   </Card>
-  <Card title="Pipeline Management" icon="diagram-project" href="/concepts/pipeline">
-    Understand deal flow statuses
+  <Card title="Pipeline Statuses" icon="diagram-project" href="/concepts/pipeline">
+    Manage deal flow stages
   </Card>
-  <Card title="Webhooks" icon="webhook" href="/concepts/sharing">
-    Set up form integrations
+  <Card title="Dashboard API" icon="gauge" href="/api-reference/dashboard/get">
+    Pipeline metrics and statistics
+  </Card>
+  <Card title="Emails API" icon="envelope" href="/api-reference/emails/list">
+    Access ingested emails
   </Card>
 </CardGroup>

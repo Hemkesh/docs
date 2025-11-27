@@ -1,51 +1,68 @@
 ---
 title: Roulette API Documentation
-description: The complete guide to integrating with the Roulette VC CRM platform
+description: Programmatic access to your AI-powered deal flow CRM
 ---
 
-# Welcome to Roulette API
+# Bet on better data.
 
-Roulette is a CRM and automation platform designed specifically for Venture Capital firms. Our API provides programmatic access to manage your deal flow, companies, contacts, and related data.
+Roulette is the AI-powered deal CRM that eliminates manual data entry for venture capital firms. Our API gives you programmatic access to automate deal flow, sync pipeline data, and build custom integrations.
 
 <CardGroup cols={2}>
   <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Get up and running with the Roulette API in 5 minutes
+    Start making API requests in under 5 minutes
   </Card>
   <Card title="Authentication" icon="key" href="/authentication">
-    Learn how to authenticate your API requests
+    Set up API key authentication
   </Card>
-  <Card title="API Reference" icon="code" href="/api-reference/introduction">
-    Explore all available endpoints
+  <Card title="Companies API" icon="building" href="/api-reference/companies/list">
+    Manage your deal pipeline programmatically
   </Card>
   <Card title="Core Concepts" icon="lightbulb" href="/concepts/companies">
-    Understand the key concepts of the Roulette platform
+    Understand how Roulette structures data
   </Card>
 </CardGroup>
 
 ## What can you build?
 
-The Roulette API enables you to:
+<CardGroup cols={2}>
+  <Card title="Automate Deal Ingestion" icon="wand-magic-sparkles">
+    Forward emails, process form submissions, or pipe in deals from any source. Our AI extracts company data, downloads decks, and populates your CRM fields automatically.
+  </Card>
+  <Card title="Sync Your Systems" icon="arrows-rotate">
+    Keep Roulette in sync with your internal tools, data warehouse, or portfolio management systems.
+  </Card>
+  <Card title="Build Custom Workflows" icon="diagram-project">
+    Connect Roulette to Zapier, Make, or your own automation pipelines to trigger actions when deals move through your pipeline.
+  </Card>
+  <Card title="Generate Reports" icon="chart-line">
+    Pull pipeline data for custom analytics, LP reporting, or investment committee dashboards.
+  </Card>
+</CardGroup>
 
-- **Automate deal flow** - Programmatically add companies from forms, emails, or other sources
-- **Sync data** - Keep your internal systems in sync with your Roulette pipeline
-- **Build integrations** - Connect Roulette with your existing tools and workflows
-- **Generate reports** - Pull data for custom analytics and reporting
-- **Manage sharing** - Create and manage shared links for LPs and co-investors
+## Key Endpoints
 
-## API Features
+| Endpoint | Description |
+|----------|-------------|
+| `POST /companies/upload/ai` | AI-powered company creation from emails, text, or files |
+| `GET /companies` | List and filter your deal pipeline |
+| `POST /companies/{id}/analyze` | Extract data from pitch decks with AI |
+| `GET /accounts/{id}/dashboard` | Pipeline statistics and metrics |
+| `GET /accounts/{id}/emails` | Access ingested emails |
+
+## API Design
 
 <AccordionGroup>
   <Accordion title="RESTful Design">
-    Our API follows REST conventions with predictable, resource-oriented URLs and standard HTTP methods.
+    Resource-oriented URLs with standard HTTP methods (GET, POST, PATCH, DELETE).
   </Accordion>
   <Accordion title="JSON Responses">
-    All responses are returned in JSON format with consistent structure across all endpoints.
+    Consistent response structure with `success`, `data`, and `error` fields.
   </Accordion>
-  <Accordion title="Pagination">
-    List endpoints support page-based pagination for efficient data retrieval.
+  <Accordion title="Cursor Pagination">
+    Efficient pagination using `has_next` and `has_prev` flags for fast response times.
   </Accordion>
-  <Accordion title="Rate Limiting">
-    Fair usage limits with clear headers to help you manage your request volume.
+  <Accordion title="AI-Powered Endpoints">
+    Intelligent endpoints that extract and structure data automatically. AI operations consume credits from your account.
   </Accordion>
 </AccordionGroup>
 
@@ -53,9 +70,9 @@ The Roulette API enables you to:
 
 <CardGroup cols={2}>
   <Card title="Contact Support" icon="envelope" href="mailto:support@useroulette.com">
-    Reach out to our team for assistance
+    Reach out to our team
   </Card>
   <Card title="Dashboard" icon="gauge" href="https://www.useroulette.com/home">
-    Access your Roulette dashboard
+    Access your Roulette CRM
   </Card>
 </CardGroup>
