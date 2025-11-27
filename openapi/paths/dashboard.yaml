@@ -14,15 +14,6 @@
       - Dashboard
     parameters:
       - $ref: '#/components/parameters/AccountIdParam'
-      - name: activity_limit
-        in: query
-        required: false
-        description: Maximum number of recent activity items to return
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 50
-          default: 10
       - name: chart_days
         in: query
         required: false
@@ -143,63 +134,3 @@
       '404':
         $ref: '#/components/responses/NotFoundError'
 
-/accounts/{account_id}/ai-credits/checkout:
-  post:
-    operationId: createAiCreditsCheckout
-    summary: Purchase AI credits
-    description: |
-      Create a checkout session to purchase additional AI credits
-      for features like pitch deck analysis and email processing.
-    tags:
-      - Dashboard
-    parameters:
-      - $ref: '#/components/parameters/AccountIdParam'
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - credits_package
-            properties:
-              credits_package:
-                type: string
-                enum: [starter, professional, enterprise]
-                description: |
-                  Credit package to purchase:
-                  - `starter`: 100 credits
-                  - `professional`: 500 credits
-                  - `enterprise`: 2000 credits
-              success_url:
-                type: string
-                format: uri
-                description: URL to redirect after successful payment
-              cancel_url:
-                type: string
-                format: uri
-                description: URL to redirect if payment is cancelled
-    responses:
-      '200':
-        description: Checkout session created
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                success:
-                  type: boolean
-                data:
-                  type: object
-                  properties:
-                    checkout_url:
-                      type: string
-                      format: uri
-                      description: URL to redirect user to for payment
-                    session_id:
-                      type: string
-                      description: Stripe checkout session ID
-      '400':
-        $ref: '#/components/responses/BadRequestError'
-      '401':
-        $ref: '#/components/responses/UnauthorizedError'
